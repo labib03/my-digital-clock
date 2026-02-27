@@ -1,0 +1,27 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #e84e1b; /* Vibrant Orange matching the reference */
+  --foreground: #111827; /* Dark Gray text */
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family:
+    "Outfit",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .geo-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
