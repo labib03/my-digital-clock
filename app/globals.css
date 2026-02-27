@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #e84e1b; /* Vibrant Orange matching the reference */
+  --background: #f2f3f5; /* Dashboard Gray */
   --foreground: #111827; /* Dark Gray text */
 }
 

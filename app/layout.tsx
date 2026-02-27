@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-    title: "TimeSpot | Global Clock",
-    description: "A clean dashboard clock experience.",
+    title: "Mawaqit",
+    description: "A clean clock.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className="antialiased min-h-screen flex items-center justify-center p-4 lg:p-12">
+            <body className="antialiased min-h-screen flex flex-col">
                 {children}
             </body>
         </html>
