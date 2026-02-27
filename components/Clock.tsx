@@ -8,6 +8,8 @@ export const Clock = () => {
     const [is24Hour, setIs24Hour] = useState<boolean>(true);
     const [isStandbyMode, setIsStandbyMode] = useState<boolean>(false);
     const [isDark, setIsDark] = useState<boolean>(false);
+    const [location, setLocation] = useState<{ city: string; country: string; district?: string } | null>(null);
+    const [locationStatus, setLocationStatus] = useState<'loading' | 'done' | 'error'>('loading');
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,6 +36,53 @@ export const Clock = () => {
         document.body.style.color = isDark ? '#F5F5F5' : '#111827';
         document.body.style.transition = 'background 0.3s, color 0.3s';
     }, [isDark]);
+
+    // Detect user location
+    useEffect(() => {
+        const fetchByIP = async () => {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                if (data.city && data.country_name) {
+                    setLocation({ city: data.city, country: data.country_name });
+                    setLocationStatus('done');
+                } else {
+                    setLocationStatus('error');
+                }
+            } catch {
+                setLocationStatus('error');
+            }
+        };
+
+        if (!navigator.geolocation) {
+            fetchByIP();
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                try {
+                    const res = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+                        { headers: { 'Accept-Language': 'en' } }
+                    );
+                    const data = await res.json();
+                    const addr = data.address;
+                    const city = addr.city || addr.town || addr.village || addr.county || addr.state || 'Unknown';
+                    const country = addr.country || 'Unknown';
+                    // Precise sub-area: suburb → neighbourhood → quarter → district
+                    const district = addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district || addr.district || undefined;
+                    setLocation({ city, country, district });
+                    setLocationStatus('done');
+                } catch {
+                    fetchByIP();
+                }
+            },
+            () => fetchByIP(),
+            { timeout: 10000, enableHighAccuracy: true }
+        );
+    }, []);
 
     if (!time) return null;
 
@@ -196,12 +245,42 @@ export const Clock = () => {
                         {/* Thin divider before cities */}
                         <div className={`w-full h-[1px] my-10 ${theme.divider}`}></div>
 
-                        {/* Bottom Cities Section Mockup */}
+                        {/* Location Header */}
                         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-6">
                             <div>
-                                <h2 className={`text-4xl lg:text-5xl font-medium tracking-tight leading-tight mb-2 ${theme.text}`} style={{ letterSpacing: '-0.02em' }}>
-                                    London,<br />United Kingdom
-                                </h2>
+                                {locationStatus === 'loading' ? (
+                                    <div className={`flex items-center gap-3 ${theme.textMuted}`}>
+                                        <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                                        <span className="text-lg font-medium">Detecting location...</span>
+                                    </div>
+                                ) : locationStatus === 'error' ? (
+                                    <div className={`flex items-center gap-2 ${theme.textMuted}`}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                        <span className="text-lg font-medium">Location unavailable</span>
+                                    </div>
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-2"
+                                    >
+                                        <h2
+                                            className={`text-4xl lg:text-5xl font-medium tracking-tight leading-tight ${theme.text}`}
+                                            style={{ letterSpacing: '-0.02em' }}
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 flex-shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                                {location?.city},
+                                            </span>
+                                            <span className="ml-11">{location?.country}</span>
+                                        </h2>
+                                        {location?.district && (
+                                            <p className={`ml-11 mt-2 text-base font-medium tracking-wide ${theme.textMuted}`}>
+                                                {location.district}
+                                            </p>
+                                        )}
+                                    </motion.div>
+                                )}
                             </div>
 
                             <div className={`hidden lg:block text-sm font-medium max-w-xs leading-relaxed ${theme.textMuted}`}>
