@@ -17,6 +17,7 @@ export const Clock = () => {
     const [prayerStatus, setPrayerStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
     const [animationStyle, setAnimationStyle] = useState<'morph' | 'liquid'>('morph');
     const [isClient, setIsClient] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Initial Load from localStorage
     useEffect(() => {
@@ -488,58 +489,59 @@ export const Clock = () => {
 
                         {/* Info bar: sunrise/sunset · date · toggle — anchored at bottom of hero */}
                         <div className="absolute bottom-10 sm:bottom-12 left-0 right-0 flex flex-col sm:grid sm:grid-cols-3 items-center px-4 sm:px-10 lg:px-14 gap-6 sm:gap-4 md:gap-0">
-                            {/* Col 1: Sunrise / Sunset — left aligned on desktop, centered on mobile */}
-                            <div className="flex items-center justify-center sm:justify-start gap-0.5 order-2 sm:order-1 scale-90 sm:scale-100">
+                            {/* Col 1: Location — left aligned on desktop, centered on mobile */}
+                            <div className="flex items-center justify-center sm:justify-start gap-1.5 order-2 sm:order-1 scale-90 sm:scale-100">
+                                {locationStatus === 'loading' ? (
+                                    <div className={`flex items-center gap-2 ${theme.textMuted}`}>
+                                        <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                                        <span className="text-xs sm:text-sm font-medium">Detecting location...</span>
+                                    </div>
+                                ) : locationStatus === 'error' ? (
+                                    <div className={`flex items-center gap-1.5 ${theme.textMuted}`}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                        <span className="text-xs sm:text-sm font-medium">Location unavailable</span>
+                                    </div>
+                                ) : (
+                                    <div className={`flex items-center gap-1.5 font-medium text-xs sm:text-sm ${theme.textMuted}`}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 flex-shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                        <span className="opacity-90">{location?.city}, {location?.country}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Col 2: Date & Sunrise/Sunset — centered */}
+                            <div className={`text-center flex flex-col items-center gap-1 sm:gap-1.5 ${theme.textMuted} order-1 sm:order-2`}>
+                                <div className="flex flex-col gap-0.5">
+                                    <div className="font-medium text-xs sm:text-sm tracking-wide opacity-80">{fullDateStr}</div>
+                                    {hijriDate && (
+                                        <div className="text-[10px] sm:text-xs font-semibold opacity-50">
+                                            <span style={{ fontFamily: 'serif' }}>{hijriDate.day} {hijriDate.month.ar}</span>
+                                            {' '}·{' '}{hijriDate.month.en} {hijriDate.year} AH
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Sunrise / Sunset incorporated in the center */}
                                 {prayerTimes ? (() => {
                                     const cleanTime = (t: string) => t.split(' ')[0];
                                     return (
-                                        <div className={`font-semibold flex items-center gap-2 ${theme.textMuted}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 flex-shrink-0"><path d="M12 2v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 6l-4-4-4 4M12 6v6" /></svg>
-                                            <span className="geo-nums text-xs sm:text-sm">{cleanTime(prayerTimes.Sunrise)}</span>
-                                            <span className="opacity-40">—</span>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400 flex-shrink-0"><path d="M12 10v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 18l-4 4-4-4M12 18V12" /></svg>
-                                            <span className="geo-nums text-xs sm:text-sm">{cleanTime(prayerTimes.Maghrib)}</span>
+                                        <div className={`font-semibold flex items-center justify-center gap-2 ${theme.textMuted}`}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 flex-shrink-0"><path d="M12 2v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 6l-4-4-4 4M12 6v6" /></svg>
+                                            <span className="geo-nums text-[10px] sm:text-xs opacity-80">{cleanTime(prayerTimes.Sunrise)}</span>
+                                            <span className="opacity-30 mx-0.5" style={{ fontSize: '10px' }}>—</span>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400 flex-shrink-0"><path d="M12 10v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 18l-4 4-4-4M12 18V12" /></svg>
+                                            <span className="geo-nums text-[10px] sm:text-xs opacity-80">{cleanTime(prayerTimes.Maghrib)}</span>
                                         </div>
                                     );
                                 })() : null}
                             </div>
 
-                            {/* Col 2: Date — centered */}
-                            <div className={`text-center flex flex-col gap-0.5 ${theme.textMuted} order-1 sm:order-2`}>
-                                <div className="font-medium text-xs sm:text-sm tracking-wide opacity-80">{fullDateStr}</div>
-                                {hijriDate && (
-                                    <div className="text-[10px] sm:text-xs font-semibold opacity-50">
-                                        <span style={{ fontFamily: 'serif' }}>{hijriDate.day} {hijriDate.month.ar}</span>
-                                        {' '}·{' '}{hijriDate.month.en} {hijriDate.year} AH
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Col 3: Configuration Toggles — right aligned on desktop, centered on mobile */}
-                            <div className="flex flex-row justify-center sm:justify-end items-center gap-2 sm:gap-3 order-3 scale-[0.85] sm:scale-100">
-                                {/* Animation Switcher */}
-                                <div className={`flex shadow-sm border rounded-full p-0.5 sm:p-1 gap-1 text-[8px] sm:text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
-                                    <div onClick={() => setAnimationStyle('morph')}
-                                        className={`px-2 sm:px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
-                                        Morph
-                                    </div>
-                                    <div onClick={() => setAnimationStyle('liquid')}
-                                        className={`px-2 sm:px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
-                                        Liquid
-                                    </div>
-                                </div>
-
-                                {/* 12h/24h toggle */}
-                                <div className={`flex shadow-sm border rounded-full p-0.5 sm:p-1 gap-1 ${theme.toggleBg}`}>
-                                    <div onClick={() => setIs24Hour(false)}
-                                        className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${!is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
-                                        12h
-                                    </div>
-                                    <div onClick={() => setIs24Hour(true)}
-                                        className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
-                                        24h
-                                    </div>
-                                </div>
+                            {/* Col 3: Configuration Toggles (Settings Button) */}
+                            <div className="flex flex-row justify-center sm:justify-end items-center order-3 sm:scale-100">
+                                <button onClick={() => setIsSettingsOpen(true)}
+                                    className={`p-2 sm:p-2.5 rounded-full transition cursor-pointer ${theme.toggleBg} hover:opacity-80 active:scale-95`}
+                                    aria-label="Clock Settings" title="Settings">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" className="sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                                </button>
                             </div>
                         </div>
 
@@ -557,40 +559,12 @@ export const Clock = () => {
                             <div className={`w-full h-[1px] mb-10 ${theme.divider}`}></div>
 
 
-                            {/* Prayer Times Header: Location + Islamic Calendar + Next Prayer Countdown */}
-                            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-6">
-                                {/* Location */}
-                                <div>
-                                    {locationStatus === 'loading' ? (
-                                        <div className={`flex items-center gap-3 ${theme.textMuted}`}>
-                                            <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-                                            <span className="text-lg font-medium">Detecting location...</span>
-                                        </div>
-                                    ) : locationStatus === 'error' ? (
-                                        <div className={`flex items-center gap-2 ${theme.textMuted}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                                            <span className="text-lg font-medium">Location unavailable</span>
-                                        </div>
-                                    ) : (
-                                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-2">
-                                            <h2 className={`text-4xl lg:text-5xl font-medium tracking-tight leading-tight ${theme.text}`} style={{ letterSpacing: '-0.02em' }}>
-                                                <span className="flex items-center gap-3">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 flex-shrink-0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                                                    {location?.city},
-                                                </span>
-                                                <span className="ml-11">{location?.country}</span>
-                                            </h2>
-                                            {location?.district && (
-                                                <p className={`ml-11 mt-2 text-base font-medium tracking-wide ${theme.textMuted}`}>{location.district}</p>
-                                            )}
-                                        </motion.div>
-                                    )}
-                                </div>
-
-                                {/* Hijri Month + Days to Ramadan */}
-                                {hijriDate && (
-                                    <div className={`hidden lg:flex flex-col gap-1 text-sm font-medium ${theme.textMuted}`}>
-                                        <span className="text-xs uppercase tracking-widest opacity-50 font-bold">Islamic Calendar</span>
+                            {/* Prayer Times Header: Islamic Calendar + Next Prayer Countdown */}
+                            <div className="flex flex-col md:flex-row justify-between items-stretch md:items-end mb-8 md:mb-6 gap-4 md:gap-0">
+                                {/* Left Side: Hijri Month + Days to Ramadan */}
+                                {hijriDate ? (
+                                    <div className={`flex flex-col gap-1.5 md:gap-1 text-sm font-medium ${theme.textMuted} p-5 md:p-0 rounded-[1.5rem] md:rounded-none border md:border-none shadow-sm md:shadow-none ${isDark ? 'bg-[#1A1A1A] md:bg-transparent border-[#2A2A2A]' : 'bg-white/50 md:bg-transparent border-black/5'}`}>
+                                        <span className="text-[10px] sm:text-xs uppercase tracking-widest opacity-60 font-bold mb-1">Islamic Calendar</span>
                                         <span className={`text-base font-semibold ${theme.text}`}>
                                             <span style={{ fontFamily: 'serif' }}>{hijriDate.month.ar}</span> {hijriDate.year} AH
                                         </span>
@@ -601,14 +575,14 @@ export const Clock = () => {
                                             if (currentMonth < 9) {
                                                 let days = daysInMonths[currentMonth] - currentDay;
                                                 for (let m = currentMonth + 1; m < 9; m++) days += daysInMonths[m];
-                                                return <span className="text-xs opacity-70">✦ {days + 1} days to Ramadan</span>;
+                                                return <span className="text-xs opacity-70 mt-1">✦ {days + 1} days to Ramadan</span>;
                                             } else if (currentMonth === 9) {
-                                                return <span className="text-xs text-amber-500 font-bold">🌙 Ramadan Mubarak!</span>;
+                                                return <span className="text-xs text-amber-500 font-bold mt-1">🌙 Ramadan Mubarak!</span>;
                                             }
                                             return null;
                                         })()}
                                     </div>
-                                )}
+                                ) : <div />}
 
                                 {/* Next Prayer Countdown */}
                                 {prayerTimes && (() => {
@@ -621,8 +595,8 @@ export const Clock = () => {
                                     const fmt = (n: number) => String(n).padStart(2, '0');
                                     const prayerLabel: Record<string, string> = { Fajr: 'الفجر', Sunrise: 'الشروق', Dhuhr: 'الظهر', Asr: 'العصر', Maghrib: 'المغرب', Isha: 'العشاء' };
                                     return (
-                                        <div className="hidden md:flex flex-col items-end gap-1 text-right">
-                                            <span className={`text-xs uppercase tracking-widest opacity-50 font-bold ${theme.textMuted}`}>Next Prayer</span>
+                                        <div className={`flex flex-col items-start md:items-end gap-1.5 md:gap-1 text-left md:text-right p-5 md:p-0 rounded-[1.5rem] md:rounded-none border md:border-none shadow-sm md:shadow-none ${isDark ? 'bg-[#1A1A1A] md:bg-transparent border-[#2A2A2A]' : 'bg-white/50 md:bg-transparent border-black/5'}`}>
+                                            <span className={`text-[10px] sm:text-xs uppercase tracking-widest opacity-60 font-bold mb-1 ${theme.textMuted}`}>Next Prayer</span>
                                             <div className={`flex items-baseline gap-2 ${theme.text}`}>
                                                 <span className="text-base font-semibold" style={{ fontFamily: 'serif' }}>{prayerLabel[nextKey]}</span>
                                                 <span className="text-sm font-medium opacity-60">{nextKey}</span>
@@ -630,7 +604,7 @@ export const Clock = () => {
                                             <span className={`text-2xl font-semibold geo-nums tracking-tight ${theme.text}`} style={{ letterSpacing: '-0.03em' }}>
                                                 {hrs > 0 ? `${fmt(hrs)}:` : ''}{fmt(mins)}:{fmt(secs)}
                                             </span>
-                                            <span className={`text-xs ${theme.textMuted} opacity-50`}>remaining</span>
+                                            <span className={`text-xs ${theme.textMuted} opacity-50 font-medium`}>remaining</span>
                                         </div>
                                     );
                                 })()}
@@ -753,6 +727,76 @@ export const Clock = () => {
                     </defs>
                 </svg>
             )}
+
+            {/* Settings Modal */}
+            <AnimatePresence>
+                {isSettingsOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setIsSettingsOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            onClick={(e) => e.stopPropagation()}
+                            className={`w-full max-w-xs sm:max-w-sm p-6 sm:p-7 rounded-[2rem] shadow-2xl ${isDark ? 'bg-[#1a1a1a] border border-white/10' : 'bg-white border border-black/5'} flex flex-col gap-6`}
+                        >
+                            <div className="flex justify-between items-center">
+                                <h3 className={`font-semibold text-lg tracking-tight ${theme.text}`}>Clock Settings</h3>
+                                <button onClick={() => setIsSettingsOpen(false)}
+                                    className={`p-1.5 rounded-full ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/5'} transition active:scale-95`}
+                                    aria-label="Close settings">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col gap-5">
+                                {/* Time Format */}
+                                <div className="flex justify-between items-center">
+                                    <div className="flex flex-col">
+                                        <span className={`text-sm font-semibold ${theme.text}`}>Time Format</span>
+                                        <span className={`text-xs ${theme.textMuted} opacity-70`}>12-hour or 24-hour clock</span>
+                                    </div>
+                                    <div className={`flex shadow-sm border rounded-full p-1 gap-1 ${theme.toggleBg}`}>
+                                        <div onClick={() => setIs24Hour(false)}
+                                            className={`px-3 py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${!is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                            12h
+                                        </div>
+                                        <div onClick={() => setIs24Hour(true)}
+                                            className={`px-3 py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                            24h
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Animation Style */}
+                                <div className="flex justify-between items-center">
+                                    <div className="flex flex-col">
+                                        <span className={`text-sm font-semibold ${theme.text}`}>Animations</span>
+                                        <span className={`text-xs ${theme.textMuted} opacity-70`}>Digit transition style</span>
+                                    </div>
+                                    <div className={`flex shadow-sm border rounded-full p-1 gap-1 text-[9px] sm:text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
+                                        <div onClick={() => setAnimationStyle('morph')}
+                                            className={`px-2.5 sm:px-3 py-1.5 rounded-full transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                            Morph
+                                        </div>
+                                        <div onClick={() => setAnimationStyle('liquid')}
+                                            className={`px-2.5 sm:px-3 py-1.5 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                            Liquid
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div >
     );
 };
