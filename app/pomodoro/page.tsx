@@ -9,6 +9,7 @@ import PomodoroHeader from "./_components/PomodoroHeader";
 import SettingsPanel from "./_components/SettingsPanel";
 import TimerSection from "./_components/TimerSection";
 import TaskPanel from "./_components/TaskPanel";
+import ThemeDecoration from "./_components/ThemeDecoration";
 
 // ─── Pomodoro Page (orchestration only — no JSX details) ─────────────────────
 
@@ -170,6 +171,8 @@ export default function PomodoroPage() {
     // ── Render ─────────────────────────────────────────────────────────────
     return (
         <div className={`h-screen overflow-hidden ${bg} ${text} flex flex-col transition-colors duration-300`}>
+
+            <ThemeDecoration isDark={isDark} />
 
             <PomodoroHeader
                 isDark={isDark}
