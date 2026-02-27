@@ -13,9 +13,9 @@ interface Props {
 
 export const HeroClock: React.FC<Props> = ({ hours, minutes, seconds, animationStyle, is24Hour, ampm, theme }) => {
     return (
-        <div className="flex flex-col items-center justify-center select-none gap-4">
+        <div className="flex flex-col items-center justify-center select-none gap-0">
             {/* Numerical Clock */}
-            <div className={`flex items-center justify-center leading-[0.85] font-medium geo-nums ${theme.text}`}
+            <div className={`flex items-center justify-center leading-[0.7] font-medium geo-nums ${theme.text}`}
                 style={{ fontSize: 'clamp(5rem, 18vw, 20vw)' }}>
                 {/* Hours */}
                 <AnimatedDigitGroup value={hours} animationStyle={animationStyle} />
@@ -31,8 +31,8 @@ export const HeroClock: React.FC<Props> = ({ hours, minutes, seconds, animationS
                 <AnimatedDigitGroup value={seconds} animationStyle={animationStyle} />
             </div>
 
-            <div className="flex flex-row items-center gap-6 uppercase mt-2 select-none"
-                style={{ fontSize: 'clamp(0.8rem, 4vw, 1.8vw)', lineHeight: '1', letterSpacing: '0.15em' }}>
+            <div className="flex flex-row items-center gap-6 uppercase select-none z-10"
+                style={{ fontSize: 'clamp(0.8rem, 4vw, 1.8vw)', lineHeight: '1', letterSpacing: '0.15em', marginTop: 'clamp(-4rem, -4vw, -1rem)' }}>
                 <span className={`font-black transition-opacity duration-500 ${!is24Hour && ampm === 'AM' ? 'opacity-100' : 'opacity-20'}`}>AM</span>
                 <span className={`font-black transition-opacity duration-500 ${!is24Hour && ampm === 'PM' ? 'opacity-100' : 'opacity-20'}`}>PM</span>
             </div>

@@ -10,10 +10,12 @@ interface Props {
     setIs24Hour: (val: boolean) => void;
     animationStyle: 'morph' | 'liquid';
     setAnimationStyle: (val: 'morph' | 'liquid') => void;
+    standbyBg: 'metaballs' | 'distortion' | 'none';
+    setStandbyBg: (val: 'metaballs' | 'distortion' | 'none') => void;
 }
 
 export const SettingsModal: React.FC<Props> = ({
-    isOpen, onClose, isDark, theme, is24Hour, setIs24Hour, animationStyle, setAnimationStyle
+    isOpen, onClose, isDark, theme, is24Hour, setIs24Hour, animationStyle, setAnimationStyle, standbyBg, setStandbyBg
 }) => {
     return (
         <AnimatePresence>
@@ -76,6 +78,28 @@ export const SettingsModal: React.FC<Props> = ({
                                     <div onClick={() => setAnimationStyle('liquid')}
                                         className={`px-2.5 sm:px-3 py-1.5 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
                                         Liquid
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Standby Background */}
+                            <div className="flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className={`text-sm font-semibold ${theme.text}`}>Standby Background</span>
+                                    <span className={`text-xs ${theme.textMuted} opacity-70`}>Visual effect in standby</span>
+                                </div>
+                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 text-[9px] sm:text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
+                                    <div onClick={() => setStandbyBg('metaballs')}
+                                        className={`px-2 py-1.5 rounded-full transition cursor-pointer ${standbyBg === 'metaballs' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        Metaballs
+                                    </div>
+                                    <div onClick={() => setStandbyBg('distortion')}
+                                        className={`px-2 py-1.5 rounded-full transition cursor-pointer ${standbyBg === 'distortion' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        Distortion
+                                    </div>
+                                    <div onClick={() => setStandbyBg('none')}
+                                        className={`px-2 py-1.5 rounded-full transition cursor-pointer ${standbyBg === 'none' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        None
                                     </div>
                                 </div>
                             </div>

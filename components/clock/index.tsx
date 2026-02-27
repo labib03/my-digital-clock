@@ -25,6 +25,7 @@ export const Clock = () => {
     const [hijriDate, setHijriDate] = useState<HijriDate | null>(null);
     const [prayerStatus, setPrayerStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
     const [animationStyle, setAnimationStyle] = useState<'morph' | 'liquid'>('morph');
+    const [standbyBg, setStandbyBg] = useState<'metaballs' | 'distortion' | 'none'>('metaballs');
     const [isClient, setIsClient] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -33,12 +34,16 @@ export const Clock = () => {
         setIsClient(true);
         const savedFormat = localStorage.getItem('clock-format');
         const savedStyle = localStorage.getItem('clock-animation');
+        const savedStandby = localStorage.getItem('clock-standbybg');
 
         if (savedFormat !== null) {
             setIs24Hour(savedFormat === '24h');
         }
         if (savedStyle !== null) {
             setAnimationStyle(savedStyle as 'morph' | 'liquid');
+        }
+        if (savedStandby !== null) {
+            setStandbyBg(savedStandby === 'viscous' ? 'distortion' : (savedStandby as 'metaballs' | 'distortion' | 'none'));
         }
     }, []);
 
@@ -52,6 +57,11 @@ export const Clock = () => {
         if (!isClient) return;
         localStorage.setItem('clock-animation', animationStyle);
     }, [animationStyle, isClient]);
+
+    useEffect(() => {
+        if (!isClient) return;
+        localStorage.setItem('clock-standbybg', standbyBg);
+    }, [standbyBg, isClient]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -198,6 +208,7 @@ export const Clock = () => {
                     ampm={ampm}
                     prayerTimes={prayerTimes}
                     time={time}
+                    standbyBg={standbyBg}
                 />
             ) : (
                 <>
@@ -261,6 +272,8 @@ export const Clock = () => {
                 setIs24Hour={setIs24Hour}
                 animationStyle={animationStyle}
                 setAnimationStyle={setAnimationStyle}
+                standbyBg={standbyBg}
+                setStandbyBg={setStandbyBg}
             />
         </div>
     );
