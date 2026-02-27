@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 interface Props {
     isDark: boolean;
@@ -25,11 +26,20 @@ export const HeaderBar: React.FC<Props> = ({ isDark, setIsDark, setIsStandbyMode
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                 <span className="font-semibold text-lg lg:text-xl tracking-tight">Mawaqit</span>
             </div>
-            {/* Standby button */}
-            <div onClick={() => setIsStandbyMode(true)}
-                className={`cursor-pointer p-3 rounded-full transition-all duration-300 ${theme.standbyBtn}`}
-                title="Enter Standby Mode">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            {/* Right Actions */}
+            <div className="flex items-center gap-1">
+                {/* Pomodoro Link */}
+                <Link href="/pomodoro"
+                    className={`cursor-pointer p-3 rounded-full transition-all duration-300 ${theme.standbyBtn}`}
+                    title="Pomodoro Timer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                </Link>
+                {/* Standby button */}
+                <div onClick={() => setIsStandbyMode(true)}
+                    className={`cursor-pointer p-3 rounded-full transition-all duration-300 ${theme.standbyBtn}`}
+                    title="Enter Standby Mode">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                </div>
             </div>
         </div>
     );
