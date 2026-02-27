@@ -82,7 +82,7 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
     const [playing, setPlaying] = useState(false);
     const [buffering, setBuffering] = useState(false);
     const [volume, setVolume] = useState(60);
-    const [expanded, setExpanded] = useState(true);
+    const [expanded, setExpanded] = useState(false);
 
     // ── Stations (default + custom from localStorage) ──────────────────────
     const [stations, setStations] = useState<Station[]>(DEFAULT_STATIONS);
@@ -293,10 +293,10 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                                             <div key={`${s.id}-${i}`} className="flex items-center gap-1.5">
                                                 <button onClick={() => changeStation(i)}
                                                     className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${active
-                                                            ? "text-white shadow-md"
-                                                            : isDark
-                                                                ? "border-white/10 hover:bg-white/5"
-                                                                : "border-gray-200 hover:bg-gray-50"
+                                                        ? "text-white shadow-md"
+                                                        : isDark
+                                                            ? "border-white/10 hover:bg-white/5"
+                                                            : "border-gray-200 hover:bg-gray-50"
                                                         }`}
                                                     style={active ? { backgroundColor: accentColor, borderColor: accentColor } : {}}>
                                                     <span className="text-sm flex-shrink-0">{s.emoji}</span>
