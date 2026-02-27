@@ -370,7 +370,7 @@ export const Clock = () => {
                             <div className="flex flex-col items-center justify-center select-none gap-4">
                                 {/* Numerical Clock */}
                                 <div className={`flex items-center justify-center leading-[0.85] font-medium geo-nums ${theme.text}`}
-                                    style={{ fontSize: 'min(20vw, 38vh)' }}>
+                                    style={{ fontSize: 'clamp(5rem, 18vw, 20vw)' }}>
                                     {/* Hours */}
                                     <div className="flex flex-row">
                                         {hours.split('').map((digit, i) => (
@@ -478,70 +478,65 @@ export const Clock = () => {
                                     </div>
                                 </div>
 
-                                {/* AM/PM Row */}
-                                <div className="flex flex-row items-center gap-6 uppercase mt-2"
-                                    style={{ fontSize: 'min(1.8vw, 3.2vh)', lineHeight: '1', letterSpacing: '0.1em' }}>
-                                    <span className={`font-black ${!is24Hour && ampm === 'AM' ? 'opacity-100' : 'opacity-10'}`}>AM</span>
-                                    <span className={`font-black ${!is24Hour && ampm === 'PM' ? 'opacity-100' : 'opacity-10'}`}>PM</span>
+                                <div className="flex flex-row items-center gap-6 uppercase mt-2 select-none"
+                                    style={{ fontSize: 'clamp(0.8rem, 4vw, 1.8vw)', lineHeight: '1', letterSpacing: '0.15em' }}>
+                                    <span className={`font-black transition-opacity duration-500 ${!is24Hour && ampm === 'AM' ? 'opacity-100' : 'opacity-20'}`}>AM</span>
+                                    <span className={`font-black transition-opacity duration-500 ${!is24Hour && ampm === 'PM' ? 'opacity-100' : 'opacity-20'}`}>PM</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Info bar: sunrise/sunset · date · toggle — anchored at bottom of hero */}
-                        <div className="absolute bottom-12 left-0 right-0 grid grid-cols-3 items-center px-6 sm:px-10 lg:px-14 text-sm">
-                            {/* Col 1: Sunrise / Sunset — left aligned */}
-                            <div className="flex items-center gap-0.5">
+                        <div className="absolute bottom-10 sm:bottom-12 left-0 right-0 flex flex-col sm:grid sm:grid-cols-3 items-center px-4 sm:px-10 lg:px-14 gap-6 sm:gap-4 md:gap-0">
+                            {/* Col 1: Sunrise / Sunset — left aligned on desktop, centered on mobile */}
+                            <div className="flex items-center justify-center sm:justify-start gap-0.5 order-2 sm:order-1 scale-90 sm:scale-100">
                                 {prayerTimes ? (() => {
-                                    const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-                                    const diff = toMins(prayerTimes.Maghrib) - toMins(prayerTimes.Sunrise);
-                                    const dh = Math.floor(diff / 60), dm = diff % 60;
                                     const cleanTime = (t: string) => t.split(' ')[0];
                                     return (
                                         <div className={`font-semibold flex items-center gap-2 ${theme.textMuted}`}>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 flex-shrink-0"><path d="M12 2v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 6l-4-4-4 4M12 6v6" /></svg>
-                                            <span className="geo-nums">{cleanTime(prayerTimes.Sunrise)}</span>
+                                            <span className="geo-nums text-xs sm:text-sm">{cleanTime(prayerTimes.Sunrise)}</span>
                                             <span className="opacity-40">—</span>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400 flex-shrink-0"><path d="M12 10v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 18l-4 4-4-4M12 18V12" /></svg>
-                                            <span className="geo-nums">{cleanTime(prayerTimes.Maghrib)}</span>
-                                            <span className="opacity-40 text-xs ml-1">({dh}h {dm}m)</span>
+                                            <span className="geo-nums text-xs sm:text-sm">{cleanTime(prayerTimes.Maghrib)}</span>
                                         </div>
                                     );
                                 })() : null}
                             </div>
 
-                            {/* Col 2: Date — truly centered */}
-                            <div className={`text-center flex flex-col gap-0.5 ${theme.textMuted}`}>
-                                <div className="font-medium opacity-70">{fullDateStr}</div>
+                            {/* Col 2: Date — centered */}
+                            <div className={`text-center flex flex-col gap-0.5 ${theme.textMuted} order-1 sm:order-2`}>
+                                <div className="font-medium text-xs sm:text-sm tracking-wide opacity-80">{fullDateStr}</div>
                                 {hijriDate && (
-                                    <div className="text-xs font-semibold opacity-50">
+                                    <div className="text-[10px] sm:text-xs font-semibold opacity-50">
                                         <span style={{ fontFamily: 'serif' }}>{hijriDate.day} {hijriDate.month.ar}</span>
                                         {' '}·{' '}{hijriDate.month.en} {hijriDate.year} AH
                                     </div>
                                 )}
                             </div>
 
-                            {/* Col 3: Configuration Toggles — right aligned */}
-                            <div className="flex flex-row justify-end gap-3">
+                            {/* Col 3: Configuration Toggles — right aligned on desktop, centered on mobile */}
+                            <div className="flex flex-row justify-center sm:justify-end items-center gap-2 sm:gap-3 order-3 scale-[0.85] sm:scale-100">
                                 {/* Animation Switcher */}
-                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
+                                <div className={`flex shadow-sm border rounded-full p-0.5 sm:p-1 gap-1 text-[8px] sm:text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
                                     <div onClick={() => setAnimationStyle('morph')}
-                                        className={`px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`px-2 sm:px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
                                         Morph
                                     </div>
                                     <div onClick={() => setAnimationStyle('liquid')}
-                                        className={`px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`px-2 sm:px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
                                         Liquid
                                     </div>
                                 </div>
 
                                 {/* 12h/24h toggle */}
-                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 ${theme.toggleBg}`}>
+                                <div className={`flex shadow-sm border rounded-full p-0.5 sm:p-1 gap-1 ${theme.toggleBg}`}>
                                     <div onClick={() => setIs24Hour(false)}
-                                        className={`px-4 py-1.5 rounded-full transition cursor-pointer font-semibold text-sm ${!is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${!is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
                                         12h
                                     </div>
                                     <div onClick={() => setIs24Hour(true)}
-                                        className={`px-4 py-1.5 rounded-full transition cursor-pointer font-semibold text-sm ${is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
                                         24h
                                     </div>
                                 </div>
@@ -652,19 +647,22 @@ export const Clock = () => {
                                 const progress = Math.max(0, Math.min(1, (nowMins - dayStart) / (dayEnd - dayStart)));
                                 const nextKey = getNextPrayer(prayerTimes);
                                 return (
-                                    <div className="mt-6">
-                                        <div className="relative mb-2" style={{ height: '2.5rem' }}>
-                                            {prayers.map((key) => {
+                                    <div className="mt-8 mb-6 sm:mb-0">
+                                        {/* Top Labels */}
+                                        <div className="relative mb-2 h-8 sm:h-10">
+                                            {prayers.map((key, i) => {
                                                 const pos = (toMins(prayerTimes[key]) - dayStart) / (dayEnd - dayStart) * 100;
                                                 const isNext = key === nextKey;
                                                 return (
-                                                    <div key={key} className="absolute flex flex-col items-center gap-0.5" style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}>
-                                                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{key}</span>
-                                                        <span className={`text-[10px] geo-nums ${isNext ? theme.text : theme.textMuted} ${isNext ? 'opacity-80' : 'opacity-40'}`}>{prayerTimes[key]}</span>
+                                                    <div key={key} className={`absolute flex-col items-center gap-0.5 whitespace-nowrap ${i % 2 !== 0 ? 'hidden sm:flex' : 'flex'}`} style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}>
+                                                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{key}</span>
+                                                        <span className={`text-[9px] sm:text-[10px] geo-nums ${isNext ? theme.text : theme.textMuted} ${isNext ? 'opacity-80' : 'opacity-40'}`}>{prayerTimes[key]}</span>
                                                     </div>
                                                 );
                                             })}
                                         </div>
+
+                                        {/* The Progress Line */}
                                         <div className={`relative w-full h-1.5 rounded-full ${theme.divider} overflow-visible`}>
                                             <div className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${isDark ? 'bg-[#F5F5F5]' : 'bg-[#111827]'}`} style={{ width: `${progress * 100}%` }} />
                                             {prayers.map((key) => {
@@ -678,6 +676,21 @@ export const Clock = () => {
                                             })}
                                             <div className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-lg border-2 ${isDark ? 'bg-[#F5F5F5] border-[#0A0A0A]' : 'bg-[#111827] border-white'}`}
                                                 style={{ left: `${progress * 100}%`, transform: 'translate(-50%, -50%)' }} />
+                                        </div>
+
+                                        {/* Bottom Labels (Mobile only - Odd indices) */}
+                                        <div className="relative mt-3 h-8 sm:hidden">
+                                            {prayers.map((key, i) => {
+                                                if (i % 2 === 0) return null;
+                                                const pos = (toMins(prayerTimes[key]) - dayStart) / (dayEnd - dayStart) * 100;
+                                                const isNext = key === nextKey;
+                                                return (
+                                                    <div key={key} className={`absolute flex flex-col items-center gap-0.5 whitespace-nowrap`} style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}>
+                                                        <span className={`text-[9px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{key}</span>
+                                                        <span className={`text-[9px] geo-nums ${isNext ? theme.text : theme.textMuted} ${isNext ? 'opacity-80' : 'opacity-40'}`}>{prayerTimes[key]}</span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 );
