@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 // ─── PomodoroHeader ───────────────────────────────────────────────────────────
 
@@ -21,6 +22,23 @@ export default function PomodoroHeader({
     onToggleTheme,
     onToggleFullscreen
 }: PomodoroHeaderProps) {
+    const [isInstallAvailable, setIsInstallAvailable] = useState(false);
+
+    useEffect(() => {
+        const handleAvailable = (e: any) => setIsInstallAvailable(e.detail);
+        window.addEventListener("pwa-prompt-available", handleAvailable);
+
+        if (localStorage.getItem("pwa-is-installed") === "true") {
+            setIsInstallAvailable(false);
+        }
+
+        return () => window.removeEventListener("pwa-prompt-available", handleAvailable);
+    }, []);
+
+    const triggerInstall = () => {
+        window.dispatchEvent(new CustomEvent("trigger-pwa-install"));
+    };
+
     return (
         <header
             className="flex-shrink-0 z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-sm"
@@ -39,6 +57,15 @@ export default function PomodoroHeader({
             <span className="text-sm font-bold tracking-tight opacity-60">Pomodoro</span>
 
             <div className="flex items-center gap-2">
+                {/* Install App Shortcut */}
+                {isInstallAvailable && (
+                    <button onClick={triggerInstall}
+                        className={`p-2 rounded-full border ${cardBg} cursor-pointer opacity-60 hover:opacity-100 transition-all`}
+                        title="Install Application">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    </button>
+                )}
+
                 {/* Fullscreen toggle */}
                 <button onClick={onToggleFullscreen}
                     className={`p-2 rounded-full border ${cardBg} cursor-pointer opacity-60 hover:opacity-100 transition-all`}

@@ -9,6 +9,24 @@ interface Props {
 }
 
 export const HeaderBar: React.FC<Props> = ({ isDark, setIsDark, setIsStandbyMode, theme }) => {
+    const [isInstallAvailable, setIsInstallAvailable] = React.useState(false);
+
+    React.useEffect(() => {
+        const handleAvailable = (e: any) => setIsInstallAvailable(e.detail);
+        window.addEventListener("pwa-prompt-available", handleAvailable);
+
+        // Check if already stored as installed
+        if (localStorage.getItem("pwa-is-installed") === "true") {
+            setIsInstallAvailable(false);
+        }
+
+        return () => window.removeEventListener("pwa-prompt-available", handleAvailable);
+    }, []);
+
+    const triggerInstall = () => {
+        window.dispatchEvent(new CustomEvent("trigger-pwa-install"));
+    };
+
     return (
         <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center px-6 sm:px-10 lg:px-14 pt-6 sm:pt-8 lg:pt-10">
             {/* Dark/Light Toggle */}
@@ -23,11 +41,18 @@ export const HeaderBar: React.FC<Props> = ({ isDark, setIsDark, setIsStandbyMode
             </div>
             {/* Logo */}
             <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                <span className="font-semibold text-lg lg:text-xl tracking-tight">Mawaqit</span>
+                <span className="font-semibold text-lg lg:text-2xl tracking-wide">Mawaqit</span>
             </div>
             {/* Right Actions */}
             <div className="flex items-center gap-1">
+                {/* Install App Shortcut */}
+                {isInstallAvailable && (
+                    <div onClick={triggerInstall}
+                        className={`cursor-pointer p-3 rounded-full transition-all duration-300 ${theme.standbyBtn}`}
+                        title="Install Application">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    </div>
+                )}
                 {/* Pomodoro Link */}
                 <Link href="/pomodoro"
                     className={`cursor-pointer p-3 rounded-full transition-all duration-300 ${theme.standbyBtn}`}
