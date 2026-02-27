@@ -22,6 +22,7 @@ export default function PomodoroPage() {
     const [customFocus, setCustomFocus] = useState(25);
     const [showSettings, setShowSettings] = useState(false);
     const [sound, setSound] = useState<SoundOption>("off");
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // ── Refs ───────────────────────────────────────────────────────────────
     const workerRef = useRef<Worker | null>(null);
@@ -140,6 +141,27 @@ export default function PomodoroPage() {
         return () => { document.title = "Mawaqit"; };
     }, [timeLeft, running, current.label]);
 
+    // ── Fullscreen Logic ───────────────────────────────────────────────────
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => { });
+            setIsFullscreen(true);
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+                setIsFullscreen(false);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    }, []);
+
     // ── Theme tokens — mirrors clock page exactly ──────────────────────────
     const bg = isDark ? "bg-[#0A0A0A]" : "bg-[#F2F3F5]";
     const text = isDark ? "text-[#F5F5F5]" : "text-[#111827]";
@@ -152,8 +174,10 @@ export default function PomodoroPage() {
             <PomodoroHeader
                 isDark={isDark}
                 cardBg={cardBg}
+                isFullscreen={isFullscreen}
                 onToggleSettings={() => setShowSettings(s => !s)}
                 onToggleTheme={() => setIsDark(d => !d)}
+                onToggleFullscreen={toggleFullscreen}
             />
 
             <SettingsPanel
