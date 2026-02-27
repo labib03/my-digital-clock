@@ -22,13 +22,11 @@ export const SubtleDistortion: React.FC<Props> = ({ isDark, seconds }) => {
             <svg className="hidden">
                 <defs>
                     {/* SVG Refraction & Distortion Filter */}
-                    <filter id="refraction-distortion" x="-20%" y="-20%" width="140%" height="140%">
-                        {/* Menghasilkan tekstur acak pergerakan cairan */}
-                        <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="2" result="noise">
-                            <animate attributeName="baseFrequency" values="0.008;0.012;0.008" dur="30s" repeatCount="indefinite" />
-                        </feTurbulence>
-                        {/* Menggeser (distorsi) elemen asli berdasarkan noise di atas */}
-                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="50" xChannelSelector="R" yChannelSelector="G" />
+                    <filter id="refraction-distortion" x="-10%" y="-10%" width="120%" height="120%">
+                        {/* numOctaves diturunkan ke 1 untuk performa maksimal */}
+                        <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise" />
+                        {/* Scale diturunkan dari 50 ke 20 agar beban hitung piksel lebih ringan */}
+                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" xChannelSelector="R" yChannelSelector="G" />
                     </filter>
                 </defs>
             </svg>
@@ -36,36 +34,36 @@ export const SubtleDistortion: React.FC<Props> = ({ isDark, seconds }) => {
             <div className="absolute inset-0 w-full h-full" style={{ filter: 'url(#refraction-distortion)' }}>
                 {/* Latar cairan buram yang menetap dan bergerak pelan */}
                 <motion.div
-                    className="absolute inset-0"
+                    className="absolute inset-0 will-change-transform"
                     style={{
                         background: `radial-gradient(ellipse at 50% 50%, rgba(${color}, 0.06) 0%, rgba(${color}, 0) 50%)`
                     }}
                     animate={{
-                        scale: [1, 1.25, 0.9, 1],
-                        opacity: [0.6, 1, 0.6],
+                        scale: [1, 1.1, 1],
+                        opacity: [0.6, 0.8, 0.6],
                     }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 />
 
-                {/* Lapisan Kedalaman (Depth Ripples): 
-                    Efek sentakan cahaya di belakang angka yang memberikan ilusi distorsi kaca cair jatuh */}
+                {/* Lapisan Kedalaman (Depth Ripples) */}
                 <AnimatePresence>
                     {ripples.map(ripple => (
                         <motion.div
                             key={ripple.id}
-                            initial={{ scale: 0.6, opacity: 0.15, filter: 'blur(20px)', y: '0vh' }}
-                            animate={{ scale: 2.2, opacity: 0, filter: 'blur(50px)', y: '8vh' }}
+                            initial={{ scale: 0.6, opacity: 0.1, y: '0vh' }}
+                            animate={{ scale: 2, opacity: 0, y: '5vh' }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 3, ease: "easeOut" }}
-                            className="absolute rounded-[40%] outline-none border-none pointer-events-none"
+                            className="absolute rounded-[40%] outline-none border-none pointer-events-none will-change-transform"
                             style={{
-                                backgroundColor: `rgba(${color}, 0.8)`,
+                                backgroundColor: `rgba(${color}, 0.5)`,
                                 width: '30vw',
                                 height: '30vw',
                                 top: '50%',
                                 left: '50%',
                                 marginLeft: '-15vw',
-                                marginTop: '-15vw' // Diposisikan pas di tengah jam
+                                marginTop: '-15vw',
+                                filter: 'blur(30px)' // Blur diturunkan
                             }}
                         />
                     ))}

@@ -77,19 +77,23 @@ export const StandbyMode: React.FC<Props> = ({
                 const fmt = (n: number) => String(n).padStart(2, '0');
                 return (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
-                        className="flex flex-col items-center gap-2 pt-20">
-                        <p className={`font-bold uppercase tracking-[0.25em] ${theme.textMuted} opacity-60`} style={{ fontSize: 'min(1.2vw, 0.8rem)' }}>Next Prayer</p>
-                        <div className="flex items-baseline gap-4">
-                            <span className={`font-medium ${theme.textMuted}`} style={{ fontFamily: 'serif', fontSize: 'min(2.5vw, 2.8vh)' }}>{label.ar}</span>
-                            <span className={`font-semibold tracking-tight geo-nums ${theme.text}`} style={{ letterSpacing: '-0.03em', fontSize: 'min(5vw, 7vh)' }}>{prayerTimes[nextKey]}</span>
-                            <span className={`font-medium ${theme.textMuted} opacity-70`} style={{ fontSize: 'min(2.5vw, 2.8vh)' }}>{label.en}</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-0.5">
-                            <span className={`font-semibold geo-nums tracking-tight ${theme.textMuted} opacity-70`} style={{ letterSpacing: '-0.03em', fontSize: 'min(3.5vw, 5vh)' }}>
-                                {cdHrs > 0 ? `${fmt(cdHrs)}:` : ''}{fmt(cdMins)}:{fmt(cdSecs)}
+                        className="absolute bottom-12 left-0 right-0 flex justify-center items-center gap-5 opacity-40 hover:opacity-100 transition-opacity duration-700 select-none">
+
+                        {/* 3 Information Grouped Minimally */}
+                        <div className="flex items-center gap-3">
+                            <span className={`uppercase font-bold tracking-[0.2em] ${theme.textMuted}`} style={{ fontSize: 'min(1vw, 0.65rem)' }}>
+                                {label.en}
                             </span>
-                            <span className={`uppercase font-bold ${theme.textMuted} opacity-40`} style={{ fontSize: 'min(0.9vw, 0.65rem)', letterSpacing: '0.2em' }}>remaining</span>
+                            <span className={`font-black geo-nums ${theme.text}`} style={{ fontSize: 'min(2.8vw, 4vh)', letterSpacing: '-0.02em' }}>
+                                {prayerTimes[nextKey]}
+                            </span>
                         </div>
+
+                        <div className={`w-[1px] h-4 ${theme.bgMuted} opacity-20`} />
+
+                        <span className={`font-medium geo-nums ${theme.textMuted} opacity-60 tracking-wider`} style={{ fontSize: 'min(2vw, 2.5vh)' }}>
+                            {cdHrs > 0 ? `${fmt(cdHrs)}:` : ''}{fmt(cdMins)}:{fmt(cdSecs)}
+                        </span>
                     </motion.div>
                 );
             })()}

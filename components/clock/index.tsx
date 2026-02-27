@@ -17,6 +17,19 @@ export const Clock = () => {
     const [time, setTime] = useState<Date | null>(null);
     const [is24Hour, setIs24Hour] = useState<boolean>(true);
     const [isStandbyMode, setIsStandbyMode] = useState<boolean>(false);
+
+    const toggleStandby = (val: boolean) => {
+        setIsStandbyMode(val);
+        if (val) {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => { });
+            }
+        } else {
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => { });
+            }
+        }
+    };
     const [isDark, setIsDark] = useState<boolean>(false);
     const [location, setLocation] = useState<{ city: string; country: string; district?: string } | null>(null);
     const [locationStatus, setLocationStatus] = useState<'loading' | 'done' | 'error'>('loading');
@@ -66,12 +79,22 @@ export const Clock = () => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
-                setIsStandbyMode(false);
+                toggleStandby(false);
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            if (!document.fullscreenElement && isStandbyMode) {
+                setIsStandbyMode(false);
+            }
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    }, [isStandbyMode]);
 
     useEffect(() => {
         setTime(new Date());
@@ -198,7 +221,7 @@ export const Clock = () => {
             {/* ─── STANDBY MODE ─── */}
             {isStandbyMode ? (
                 <StandbyMode
-                    setIsStandbyMode={setIsStandbyMode}
+                    setIsStandbyMode={toggleStandby}
                     theme={theme}
                     hours={hours}
                     minutes={minutes}
@@ -215,7 +238,7 @@ export const Clock = () => {
                     {/* ─── NORMAL MODE SECTION 1: Full-viewport hero clock ─── */}
                     <section className="relative w-full flex flex-col" style={{ height: '100svh' }}>
                         {/* Header overlaid */}
-                        <HeaderBar isDark={isDark} setIsDark={setIsDark} setIsStandbyMode={setIsStandbyMode} theme={theme} />
+                        <HeaderBar isDark={isDark} setIsDark={setIsDark} setIsStandbyMode={toggleStandby} theme={theme} />
 
                         <div className="flex-1 flex justify-center items-center">
                             <HeroClock hours={hours} minutes={minutes} seconds={seconds} animationStyle={animationStyle} is24Hour={is24Hour} ampm={ampm} theme={theme} />
