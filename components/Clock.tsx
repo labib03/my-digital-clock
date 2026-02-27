@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { fetchPrayerTimes, getNextPrayer, type PrayerTimes, type HijriDate } from "@/lib/prayerService";
 
 export const Clock = () => {
@@ -15,6 +15,33 @@ export const Clock = () => {
     const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
     const [hijriDate, setHijriDate] = useState<HijriDate | null>(null);
     const [prayerStatus, setPrayerStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+    const [animationStyle, setAnimationStyle] = useState<'morph' | 'liquid'>('morph');
+    const [isClient, setIsClient] = useState(false);
+
+    // Initial Load from localStorage
+    useEffect(() => {
+        setIsClient(true);
+        const savedFormat = localStorage.getItem('clock-format');
+        const savedStyle = localStorage.getItem('clock-animation');
+
+        if (savedFormat !== null) {
+            setIs24Hour(savedFormat === '24h');
+        }
+        if (savedStyle !== null) {
+            setAnimationStyle(savedStyle as 'morph' | 'liquid');
+        }
+    }, []);
+
+    // Persist changes
+    useEffect(() => {
+        if (!isClient) return;
+        localStorage.setItem('clock-format', is24Hour ? '24h' : '12h');
+    }, [is24Hour, isClient]);
+
+    useEffect(() => {
+        if (!isClient) return;
+        localStorage.setItem('clock-animation', animationStyle);
+    }, [animationStyle, isClient]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,7 +130,7 @@ export const Clock = () => {
             .catch(() => setPrayerStatus('error'));
     }, [coords]);
 
-    if (!time) return null;
+    if (!time || !isClient) return null;
 
     const formatComponent = (val: number) => val.toString().padStart(2, "0");
 
@@ -158,14 +185,113 @@ export const Clock = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
                     </div>
                     <div className="flex flex-col items-center justify-center select-none gap-4">
-                        {/* Numerical Clock */}
                         <div className={`flex items-center justify-center leading-[0.85] font-medium geo-nums ${theme.text}`}
                             style={{ fontSize: 'min(22vw, 42vh)' }}>
-                            <motion.div key={`h-${hours}`} initial={{ y: -5, opacity: 0.8 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex justify-center text-center">{hours}</motion.div>
-                            <div className="pb-[8%] opacity-80 mx-[1vw] leading-none shrink-0">:</div>
-                            <motion.div key={`m-${minutes}`} initial={{ y: -5, opacity: 0.8 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex justify-center text-center">{minutes}</motion.div>
-                            <div className="pb-[8%] opacity-80 mx-[1vw] leading-none shrink-0">:</div>
-                            <motion.div key={`s-${seconds}`} initial={{ y: -5, opacity: 0.8 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex justify-center text-center">{seconds}</motion.div>
+                            {/* Hours */}
+                            <div className="flex flex-row">
+                                {hours.split('').map((digit, i) => (
+                                    <div key={`h-${i}`}
+                                        className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                                        style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
+                                    >
+                                        <AnimatePresence mode="popLayout" initial={false}>
+                                            <motion.div
+                                                key={`${digit}`}
+                                                initial={animationStyle === 'morph'
+                                                    ? { y: "80%", opacity: 0, scaleY: 0.2 }
+                                                    : { filter: 'blur(8px)', opacity: 0, scale: 0.9 }
+                                                }
+                                                animate={animationStyle === 'morph'
+                                                    ? { y: 0, opacity: 1, scaleY: 1 }
+                                                    : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                                }
+                                                exit={animationStyle === 'morph'
+                                                    ? { y: "-80%", opacity: 0, scaleY: 0.2 }
+                                                    : { filter: 'blur(8px)', opacity: 0, scale: 1.1 }
+                                                }
+                                                transition={{
+                                                    duration: animationStyle === 'morph' ? 0.45 : 0.4,
+                                                    ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                                }}
+                                            >
+                                                {digit}
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="pb-[8%] opacity-80 mx-[0.5vw] leading-none shrink-0">:</div>
+
+                            {/* Minutes */}
+                            <div className="flex flex-row">
+                                {minutes.split('').map((digit, i) => (
+                                    <div key={`m-${i}`}
+                                        className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                                        style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
+                                    >
+                                        <AnimatePresence mode="popLayout" initial={false}>
+                                            <motion.div
+                                                key={`${digit}`}
+                                                initial={animationStyle === 'morph'
+                                                    ? { y: "80%", opacity: 0, scaleY: 0.2 }
+                                                    : { filter: 'blur(8px)', opacity: 0, scale: 0.9 }
+                                                }
+                                                animate={animationStyle === 'morph'
+                                                    ? { y: 0, opacity: 1, scaleY: 1 }
+                                                    : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                                }
+                                                exit={animationStyle === 'morph'
+                                                    ? { y: "-80%", opacity: 0, scaleY: 0.2 }
+                                                    : { filter: 'blur(8px)', opacity: 0, scale: 1.1 }
+                                                }
+                                                transition={{
+                                                    duration: animationStyle === 'morph' ? 0.45 : 0.4,
+                                                    ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                                }}
+                                            >
+                                                {digit}
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="pb-[8%] opacity-80 mx-[0.5vw] leading-none shrink-0">:</div>
+
+                            {/* Seconds */}
+                            <div className="flex flex-row">
+                                {seconds.split('').map((digit, i) => (
+                                    <div key={`s-${i}`}
+                                        className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                                        style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
+                                    >
+                                        <AnimatePresence mode="popLayout" initial={false}>
+                                            <motion.div
+                                                key={`${digit}`}
+                                                initial={animationStyle === 'morph'
+                                                    ? { y: "80%", opacity: 0, scaleY: 0.2 }
+                                                    : { filter: 'blur(8px)', opacity: 0, scale: 0.9 }
+                                                }
+                                                animate={animationStyle === 'morph'
+                                                    ? { y: 0, opacity: 1, scaleY: 1 }
+                                                    : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                                }
+                                                exit={animationStyle === 'morph'
+                                                    ? { y: "-80%", opacity: 0, scaleY: 0.2 }
+                                                    : { filter: 'blur(8px)', opacity: 0, scale: 1.1 }
+                                                }
+                                                transition={{
+                                                    duration: animationStyle === 'morph' ? 0.45 : 0.4,
+                                                    ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                                }}
+                                            >
+                                                {digit}
+                                            </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         {/* AM/PM Row - Positioned below the clock digits */}
@@ -245,11 +371,111 @@ export const Clock = () => {
                                 {/* Numerical Clock */}
                                 <div className={`flex items-center justify-center leading-[0.85] font-medium geo-nums ${theme.text}`}
                                     style={{ fontSize: 'min(20vw, 38vh)' }}>
-                                    <motion.div key={`h-${hours}`} initial={{ y: -5, opacity: 0.8 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex justify-center text-center">{hours}</motion.div>
-                                    <div className="pb-[8%] opacity-80 mx-[1vw] leading-none shrink-0">:</div>
-                                    <motion.div key={`m-${minutes}`} initial={{ y: -5, opacity: 0.8 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex justify-center text-center">{minutes}</motion.div>
-                                    <div className="pb-[8%] opacity-80 mx-[1vw] leading-none shrink-0">:</div>
-                                    <motion.div key={`s-${seconds}`} initial={{ y: -5, opacity: 0.8 }} animate={{ y: 0, opacity: 1 }} className="flex-1 flex justify-center text-center">{seconds}</motion.div>
+                                    {/* Hours */}
+                                    <div className="flex flex-row">
+                                        {hours.split('').map((digit, i) => (
+                                            <div key={`h-${i}`}
+                                                className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                                                style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
+                                            >
+                                                <AnimatePresence mode="popLayout" initial={false}>
+                                                    <motion.div
+                                                        key={`${digit}`}
+                                                        initial={animationStyle === 'morph'
+                                                            ? { y: "80%", opacity: 0, scaleY: 0.2 }
+                                                            : { filter: 'blur(8px)', opacity: 0, scale: 0.95 }
+                                                        }
+                                                        animate={animationStyle === 'morph'
+                                                            ? { y: 0, opacity: 1, scaleY: 1 }
+                                                            : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                                        }
+                                                        exit={animationStyle === 'morph'
+                                                            ? { y: "-80%", opacity: 0, scaleY: 0.2 }
+                                                            : { filter: 'blur(8px)', opacity: 0, scale: 1.05 }
+                                                        }
+                                                        transition={{
+                                                            duration: 0.4,
+                                                            ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                                        }}
+                                                    >
+                                                        {digit}
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="pb-[8%] opacity-80 mx-[0.5vw] leading-none shrink-0">:</div>
+
+                                    {/* Minutes */}
+                                    <div className="flex flex-row">
+                                        {minutes.split('').map((digit, i) => (
+                                            <div key={`m-${i}`}
+                                                className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                                                style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
+                                            >
+                                                <AnimatePresence mode="popLayout" initial={false}>
+                                                    <motion.div
+                                                        key={`${digit}`}
+                                                        initial={animationStyle === 'morph'
+                                                            ? { y: "80%", opacity: 0, scaleY: 0.2 }
+                                                            : { filter: 'blur(8px)', opacity: 0, scale: 0.95 }
+                                                        }
+                                                        animate={animationStyle === 'morph'
+                                                            ? { y: 0, opacity: 1, scaleY: 1 }
+                                                            : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                                        }
+                                                        exit={animationStyle === 'morph'
+                                                            ? { y: "-80%", opacity: 0, scaleY: 0.2 }
+                                                            : { filter: 'blur(8px)', opacity: 0, scale: 1.05 }
+                                                        }
+                                                        transition={{
+                                                            duration: 0.4,
+                                                            ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                                        }}
+                                                    >
+                                                        {digit}
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="pb-[8%] opacity-80 mx-[0.5vw] leading-none shrink-0">:</div>
+
+                                    {/* Seconds */}
+                                    <div className="flex flex-row">
+                                        {seconds.split('').map((digit, i) => (
+                                            <div key={`s-${i}`}
+                                                className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                                                style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
+                                            >
+                                                <AnimatePresence mode="popLayout" initial={false}>
+                                                    <motion.div
+                                                        key={`${digit}`}
+                                                        initial={animationStyle === 'morph'
+                                                            ? { y: "80%", opacity: 0, scaleY: 0.2 }
+                                                            : { filter: 'blur(8px)', opacity: 0, scale: 0.95 }
+                                                        }
+                                                        animate={animationStyle === 'morph'
+                                                            ? { y: 0, opacity: 1, scaleY: 1 }
+                                                            : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                                        }
+                                                        exit={animationStyle === 'morph'
+                                                            ? { y: "-80%", opacity: 0, scaleY: 0.2 }
+                                                            : { filter: 'blur(8px)', opacity: 0, scale: 1.05 }
+                                                        }
+                                                        transition={{
+                                                            duration: 0.4,
+                                                            ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                                        }}
+                                                    >
+                                                        {digit}
+                                                    </motion.div>
+                                                </AnimatePresence>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* AM/PM Row */}
@@ -294,8 +520,21 @@ export const Clock = () => {
                                 )}
                             </div>
 
-                            {/* Col 3: 12h/24h toggle — right aligned */}
-                            <div className="flex justify-end">
+                            {/* Col 3: Configuration Toggles — right aligned */}
+                            <div className="flex flex-row justify-end gap-3">
+                                {/* Animation Switcher */}
+                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
+                                    <div onClick={() => setAnimationStyle('morph')}
+                                        className={`px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        Morph
+                                    </div>
+                                    <div onClick={() => setAnimationStyle('liquid')}
+                                        className={`px-3 py-1 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        Liquid
+                                    </div>
+                                </div>
+
+                                {/* 12h/24h toggle */}
                                 <div className={`flex shadow-sm border rounded-full p-1 gap-1 ${theme.toggleBg}`}>
                                     <div onClick={() => setIs24Hour(false)}
                                         className={`px-4 py-1.5 rounded-full transition cursor-pointer font-semibold text-sm ${!is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
@@ -490,6 +729,17 @@ export const Clock = () => {
                 </>
             )
             }
+            {/* Conditional Hidden SVG Filter for Gooey Effect */}
+            {animationStyle === 'liquid' && (
+                <svg className="hidden" aria-hidden="true">
+                    <defs>
+                        <filter id="gooey">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+                            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+                        </filter>
+                    </defs>
+                </svg>
+            )}
         </div >
     );
 };
