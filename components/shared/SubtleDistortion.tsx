@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface Props {
     isDark: boolean;
     seconds: string;
+    colorOverride?: string;
 }
 
-export const SubtleDistortion: React.FC<Props> = ({ isDark, seconds }) => {
+export const SubtleDistortion: React.FC<Props> = ({ isDark, seconds, colorOverride }) => {
     const [ripples, setRipples] = useState<{ id: string }[]>([]);
 
     useEffect(() => {
@@ -36,7 +37,9 @@ export const SubtleDistortion: React.FC<Props> = ({ isDark, seconds }) => {
                 <motion.div
                     className="absolute inset-0 will-change-transform"
                     style={{
-                        background: `radial-gradient(ellipse at 50% 50%, rgba(${color}, 0.06) 0%, rgba(${color}, 0) 50%)`
+                        background: colorOverride
+                            ? `radial-gradient(ellipse at 50% 50%, ${colorOverride}22 0%, ${colorOverride}00 50%)`
+                            : `radial-gradient(ellipse at 50% 50%, rgba(${color}, 0.06) 0%, rgba(${color}, 0) 50%)`
                     }}
                     animate={{
                         scale: [1, 1.1, 1],

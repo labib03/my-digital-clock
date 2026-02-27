@@ -11,7 +11,7 @@ export const AnimatedDigitGroup: React.FC<Props> = ({ value, animationStyle }) =
         <div className="flex flex-row">
             {value.split('').map((digit, i) => (
                 <div key={`d-${i}`}
-                    className="relative h-[1em] w-[0.55em] flex justify-center overflow-hidden"
+                    className="relative h-[1em] w-[0.6em] flex justify-center overflow-hidden"
                     style={animationStyle === 'liquid' ? { filter: 'url(#gooey)' } : {}}
                 >
                     <AnimatePresence mode="popLayout" initial={false}>

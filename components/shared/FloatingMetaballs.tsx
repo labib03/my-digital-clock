@@ -3,13 +3,16 @@ import { motion } from 'framer-motion';
 
 interface MetaballProps {
     isDark: boolean;
+    colors?: string[];
 }
 
-export const FloatingMetaballs: React.FC<MetaballProps> = ({ isDark }) => {
+export const FloatingMetaballs: React.FC<MetaballProps> = ({ isDark, colors: propColors }) => {
     // Polychromatic "Aura" Colors
-    const colors = isDark
+    const defaultColors = isDark
         ? ['#3B82F6', '#8B5CF6', '#EC4899', '#10B981'] // Blue, Purple, Pink, Emerald
         : ['#93C5FD', '#C4B5FD', '#F9A8D4', '#6EE7B7']; // Lighter pastel variants
+
+    const colors = propColors || defaultColors;
 
     // Kita perbesar keterlihatannya agar warnanya membaur dengan kaya:
     const containerClass = isDark ? 'opacity-[0.35] mix-blend-screen' : 'opacity-[0.45] mix-blend-multiply';
