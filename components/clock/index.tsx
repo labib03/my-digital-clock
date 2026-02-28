@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchPrayerTimes, getNextPrayer, type PrayerTimes, type HijriDate } from "@/lib/prayerService";
+import { useLanguage } from "../shared/LanguageContext";
 import { AnimatedDigitGroup } from "../shared/AnimatedDigitGroup";
 import { SettingsModal } from "../settings/SettingsModal";
 import { StandbyMode } from "./StandbyMode";
@@ -14,6 +15,7 @@ import { InfoBar } from "./InfoBar";
 import { PrayerHeader } from "../prayer/PrayerHeader";
 
 export const Clock = () => {
+    const { t } = useLanguage();
     const [time, setTime] = useState<Date | null>(null);
     const [is24Hour, setIs24Hour] = useState<boolean>(true);
     const [isStandbyMode, setIsStandbyMode] = useState<boolean>(false);
@@ -187,8 +189,8 @@ export const Clock = () => {
     const seconds = formatComponent(time.getSeconds());
 
     // Date formatting
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = t('days');
+    const months = t('months');
 
     const dayName = days[time.getDay()];
     const monthName = months[time.getMonth()];

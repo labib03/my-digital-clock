@@ -1,5 +1,6 @@
 import React from 'react';
 import { PrayerTimes, getNextPrayer } from '@/lib/prayerService';
+import { useLanguage } from '../shared/LanguageContext';
 
 interface Props {
     prayerTimes: PrayerTimes | null;
@@ -9,9 +10,17 @@ interface Props {
 }
 
 export const PrayerProgressBar: React.FC<Props> = ({ prayerTimes, time, isDark, theme }) => {
+    const { t } = useLanguage();
     if (!prayerTimes) return null;
 
     const prayers: (keyof typeof prayerTimes)[] = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const prayerLabels: Record<string, string> = {
+        Fajr: t('fajr'),
+        Dhuhr: t('dhuhr'),
+        Asr: t('asr'),
+        Maghrib: t('maghrib'),
+        Isha: t('isha'),
+    };
     const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
     // Default to current time if time prop is somehow missing
@@ -33,7 +42,7 @@ export const PrayerProgressBar: React.FC<Props> = ({ prayerTimes, time, isDark, 
                     const isNext = key === nextKey;
                     return (
                         <div key={key} className={`absolute flex-col items-center gap-0.5 whitespace-nowrap ${i % 2 !== 0 ? 'hidden sm:flex' : 'flex'}`} style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}>
-                            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{key}</span>
+                            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{prayerLabels[key]}</span>
                             <span className={`text-[9px] sm:text-[10px] geo-nums ${isNext ? theme.text : theme.textMuted} ${isNext ? 'opacity-80' : 'opacity-40'}`}>{prayerTimes[key]}</span>
                         </div>
                     );
@@ -64,7 +73,7 @@ export const PrayerProgressBar: React.FC<Props> = ({ prayerTimes, time, isDark, 
                     const isNext = key === nextKey;
                     return (
                         <div key={key} className={`absolute flex flex-col items-center gap-0.5 whitespace-nowrap`} style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}>
-                            <span className={`text-[9px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{key}</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider ${isNext ? theme.text : theme.textMuted} ${isNext ? '' : 'opacity-50'}`}>{prayerLabels[key]}</span>
                             <span className={`text-[9px] geo-nums ${isNext ? theme.text : theme.textMuted} ${isNext ? 'opacity-80' : 'opacity-40'}`}>{prayerTimes[key]}</span>
                         </div>
                     );

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/components/shared/LanguageContext";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface Station {
@@ -11,11 +12,6 @@ interface Station {
     emoji: string;
     custom?: boolean;
 }
-
-// ─── Default stations (only 1 guaranteed to work as a baseline) ───────────────
-const DEFAULT_STATIONS: Station[] = [
-    { id: "jfKfPfyJRdk", name: "Lofi Hip Hop", mood: "Beats to relax/study", emoji: "☕" },
-];
 
 // ─── YouTube URL → ID parser ──────────────────────────────────────────────────
 function parseYouTubeId(input: string): string | null {
@@ -77,6 +73,7 @@ interface LofiPlayerProps {
 const STORAGE_KEY = "pomodoro-lofi-stations";
 
 export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
+    const { t } = useLanguage();
     const playerRef = useRef<YTPlayer | null>(null);
     const [ready, setReady] = useState(false);
     const [playing, setPlaying] = useState(false);
@@ -85,6 +82,10 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
     const [expanded, setExpanded] = useState(false);
 
     // ── Stations (default + custom from localStorage) ──────────────────────
+    const DEFAULT_STATIONS: Station[] = [
+        { id: "jfKfPfyJRdk", name: t('lofiHipHop'), mood: t('beatsToRelax'), emoji: "☕" },
+    ];
+
     const [stations, setStations] = useState<Station[]>(DEFAULT_STATIONS);
     const [stationIdx, setStationIdx] = useState(0);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -102,6 +103,14 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
             }
         } catch { /* ignore */ }
     }, []);
+
+    // Update default stations when language changes
+    useEffect(() => {
+        setStations(prev => [
+            { id: "jfKfPfyJRdk", name: t('lofiHipHop'), mood: t('beatsToRelax'), emoji: "☕" },
+            ...prev.filter(s => s.custom)
+        ]);
+    }, [t]);
 
     const persistCustom = (all: Station[]) => {
         const custom = all.filter(s => s.custom);
@@ -134,7 +143,7 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                 },
             },
         });
-    }, []);
+    }, [DEFAULT_STATIONS]);
 
     useEffect(() => {
         if (window.YT?.Player) { initPlayer(); return; }
@@ -150,8 +159,7 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
             document.head.appendChild(s);
         }
         return () => {
-            playerRef.current?.destroy();
-            playerRef.current = null;
+            // playerRef.current?.destroy(); // Keep playing if possible or handle cleanup
         };
     }, [initPlayer]);
 
@@ -179,8 +187,8 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
     const handleAddStation = () => {
         setAddError("");
         const videoId = parseYouTubeId(urlInput);
-        if (!videoId) { setAddError("Invalid YouTube URL or video ID"); return; }
-        const name = nameInput.trim() || "Custom Station";
+        if (!videoId) { setAddError(t('invalidYoutubeUrl')); return; }
+        const name = nameInput.trim() || t('customStation');
         const newStation: Station = { id: videoId, name, mood: "Custom", emoji: "🎵", custom: true };
         const updated = [...stations, newStation];
         setStations(updated);
@@ -234,10 +242,10 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                         </div>
                         <div className="text-left">
                             <p className="text-xs font-bold tracking-wide leading-tight">
-                                {playing ? station.name : "Lofi Radio"}
+                                {playing ? station.name : t('lofiRadio')}
                             </p>
                             <p className="text-[10px] opacity-40 leading-tight mt-0.5">
-                                {playing ? station.mood : "Click ▶ to play"}
+                                {playing ? station.mood : t('clickToPlay')}
                             </p>
                         </div>
                     </div>
@@ -328,21 +336,21 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                                             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                                             className="flex flex-col gap-2">
                                             <input value={urlInput} onChange={e => setUrlInput(e.target.value)}
-                                                placeholder="YouTube URL or video ID..."
+                                                placeholder={t('youtubeUrlPlaceholder')}
                                                 className={`text-xs px-3 py-2 rounded-lg border outline-none transition w-full ${inputCls}`} />
                                             <input value={nameInput} onChange={e => setNameInput(e.target.value)}
-                                                placeholder="Station name (optional)"
+                                                placeholder={t('stationNamePlaceholder')}
                                                 className={`text-xs px-3 py-2 rounded-lg border outline-none transition w-full ${inputCls}`} />
                                             {addError && <p className="text-[10px] text-red-400">{addError}</p>}
                                             <div className="flex gap-2">
                                                 <button onClick={handleAddStation}
                                                     className="flex-1 py-1.5 rounded-lg text-white text-[10px] font-bold cursor-pointer transition active:scale-95"
                                                     style={{ backgroundColor: accentColor }}>
-                                                    Add Station
+                                                    {t('addStation')}
                                                 </button>
                                                 <button onClick={() => { setShowAddForm(false); setAddError(""); }}
                                                     className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border transition ${isDark ? "border-white/10 hover:bg-white/5" : "border-gray-200 hover:bg-gray-50"}`}>
-                                                    Cancel
+                                                    {t('cancel')}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -352,13 +360,13 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                                             onClick={() => setShowAddForm(true)}
                                             className={`w-full py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-80 cursor-pointer transition flex items-center justify-center gap-1.5 ${isDark ? "border-white/10" : "border-gray-200"}`}>
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                                            Add YouTube station
+                                            {t('addYoutubeStation')}
                                         </motion.button>
                                     )}
                                 </AnimatePresence>
 
                                 <p className="text-[9px] opacity-20 text-center">
-                                    Streams via YouTube · paste any YouTube URL or video ID
+                                    {t('streamsViaYoutube')}
                                 </p>
                             </div>
                         </motion.div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Task } from "./types";
+import { useLanguage } from "@/components/shared/LanguageContext";
 
 // ─── TaskList ─────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ interface TaskListProps {
 }
 
 export default function TaskList({ isDark, accentColor }: TaskListProps) {
+    const { t } = useLanguage();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [input, setInput] = useState("");
 
@@ -50,7 +52,7 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
 
             {/* Header row: label + action buttons */}
             <div className="flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-widest font-bold opacity-40">This Session</p>
+                <p className="text-xs uppercase tracking-widest font-bold opacity-40">{t('tasks')}</p>
                 {/* Buttons stay in DOM always — only opacity/scale animates, no layout shift */}
                 <div className="flex items-center gap-2">
                     <motion.button
@@ -63,7 +65,7 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
                             borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
                             pointerEvents: hasDone ? "auto" : "none",
                         }}>
-                        Clear done
+                        {t('clearDone')}
                     </motion.button>
                     <motion.button
                         onClick={clearAll}
@@ -72,7 +74,7 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
                         transition={{ duration: 0.18 }}
                         className="text-[10px] font-semibold uppercase tracking-widest cursor-pointer px-2.5 py-1 rounded-full text-red-500 border border-red-400/30 whitespace-nowrap"
                         style={{ pointerEvents: hasAny ? "auto" : "none" }}>
-                        Clear all
+                        {t('clearAll')}
                     </motion.button>
                 </div>
             </div>
@@ -82,7 +84,7 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
                 <input
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    placeholder="Add a task..."
+                    placeholder={t('addTask')}
                     className={`flex-1 text-sm px-3 py-2 rounded-lg border outline-none transition ${isDark
                         ? "bg-white/5 border-white/10 placeholder:text-white/30 focus:border-white/30"
                         : "bg-gray-50 border-gray-200 placeholder:text-gray-400 focus:border-gray-400"}`}
@@ -90,7 +92,7 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
                 <button type="submit"
                     className="px-3 py-2 rounded-lg text-white text-sm font-semibold cursor-pointer transition active:scale-95"
                     style={{ backgroundColor: accentColor }}>
-                    Add
+                    {t('add')}
                 </button>
             </form>
 
@@ -102,7 +104,7 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
                             key="empty"
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="text-xs opacity-30 text-center py-4">
-                            No tasks yet. Add one above!
+                            {t('noTasks')}
                         </motion.p>
                     )}
                     {tasks.map(task => (

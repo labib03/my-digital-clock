@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { BREATHING, BREATHING_CYCLE, type BreathPhase } from "./types";
+import { useLanguage } from "@/components/shared/LanguageContext";
 
 // ─── BreathingGuide ───────────────────────────────────────────────────────────
 
@@ -11,9 +12,9 @@ interface BreathingGuideProps {
 }
 
 export default function BreathingGuide({ color }: BreathingGuideProps) {
+    const { t } = useLanguage();
     const [tick, setTick] = useState(0);
     const [breathPhase, setBreathPhase] = useState<BreathPhase>("inhale");
-    const [label, setLabel] = useState("Breathe in...");
     const [scale, setScale] = useState(0.5);
 
     useEffect(() => {
@@ -24,11 +25,11 @@ export default function BreathingGuide({ color }: BreathingGuideProps) {
     useEffect(() => {
         const pos = tick % BREATHING_CYCLE;
         if (pos < BREATHING.inhale) {
-            setBreathPhase("inhale"); setLabel("Breathe in..."); setScale(1);
+            setBreathPhase("inhale"); setScale(1);
         } else if (pos < BREATHING.inhale + BREATHING.hold) {
-            setBreathPhase("hold"); setLabel("Hold...");
+            setBreathPhase("hold");
         } else {
-            setBreathPhase("exhale"); setLabel("Breathe out..."); setScale(0.5);
+            setBreathPhase("exhale"); setScale(0.5);
         }
     }, [tick]);
 
@@ -36,10 +37,12 @@ export default function BreathingGuide({ color }: BreathingGuideProps) {
         : breathPhase === "hold" ? BREATHING.hold
             : BREATHING.exhale;
 
+    const label = breathPhase === "inhale" ? t('breatheIn') : breathPhase === "hold" ? t('hold') : t('breatheOut');
+
     return (
         <motion.div className="flex flex-col items-center gap-6 py-4 select-none"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <p className="text-xs uppercase tracking-[0.3em] opacity-40 font-bold">Short Break · Breathe</p>
+            <p className="text-xs uppercase tracking-[0.3em] opacity-40 font-bold">{t('shortBreakBreathe')}</p>
             <div className="relative flex items-center justify-center" style={{ width: 200, height: 200 }}>
                 <motion.div className="absolute rounded-full opacity-20"
                     style={{ backgroundColor: color, width: 200, height: 200 }}
@@ -57,7 +60,12 @@ export default function BreathingGuide({ color }: BreathingGuideProps) {
                 </motion.div>
             </div>
             <p className="text-lg font-semibold opacity-70">{label}</p>
-            <p className="text-xs opacity-30">{BREATHING.inhale}s in · {BREATHING.hold}s hold · {BREATHING.exhale}s out</p>
+            <p className="text-xs opacity-30">
+                {String(t('breathePattern'))
+                    .replace('{0}', BREATHING.inhale.toString())
+                    .replace('{1}', BREATHING.hold.toString())
+                    .replace('{2}', BREATHING.exhale.toString())}
+            </p>
         </motion.div>
     );
 }

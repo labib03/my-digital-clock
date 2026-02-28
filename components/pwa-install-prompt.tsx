@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "./shared/LanguageContext";
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -12,6 +13,7 @@ const DISMISS_KEY = "pwa-install-dismissed-at";
 const INSTALLED_KEY = "pwa-is-installed";
 
 export default function PWAInstallPrompt() {
+    const { t } = useLanguage();
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
@@ -119,9 +121,9 @@ export default function PWAInstallPrompt() {
 
                             <div className="flex flex-col items-center text-center gap-5">
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold tracking-tight text-white">Install Mawaqit</h3>
+                                    <h3 className="text-xl font-bold tracking-tight text-white">{t('installTitle')}</h3>
                                     <p className="text-sm text-white/50 leading-relaxed font-medium">
-                                        Unduh aplikasi Mawaqit ke perangkat Anda untuk akses lebih cepat dan pengalaman offline yang lebih baik.
+                                        {t('installDesc')}
                                     </p>
                                 </div>
                                 <div className="flex flex-col w-full gap-3 mt-2">
@@ -129,13 +131,13 @@ export default function PWAInstallPrompt() {
                                         onClick={executeInstall}
                                         className="w-full py-4 rounded-2xl bg-white text-black font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg cursor-pointer"
                                     >
-                                        Install Now
+                                        {t('installButton')}
                                     </button>
                                     <button
                                         onClick={() => setShowConfirm(false)}
                                         className="w-full py-4 rounded-2xl bg-white/5 text-white/40 font-bold text-sm hover:text-white/70 hover:bg-white/10 transition-all cursor-pointer"
                                     >
-                                        Later
+                                        {t('laterButton')}
                                     </button>
                                 </div>
                             </div>
@@ -151,8 +153,8 @@ export default function PWAInstallPrompt() {
                         <div className="pwa-install-content">
                             <div className="pwa-install-icon-wrapper">⏱</div>
                             <div className="pwa-install-text">
-                                <p className="pwa-install-title">Install Mawaqit</p>
-                                <p className="pwa-install-subtitle">Add to home screen for quick access</p>
+                                <p className="pwa-install-title">{t('installBannerTitle')}</p>
+                                <p className="pwa-install-subtitle">{t('installBannerDesc')}</p>
                             </div>
                         </div>
                         <div className="pwa-install-actions">
@@ -161,7 +163,7 @@ export default function PWAInstallPrompt() {
                                 className="pwa-btn pwa-btn-primary"
                                 onClick={handleInstallRequest}
                             >
-                                Install
+                                {t('start')}
                             </button>
                             <button
                                 id="pwa-dismiss-btn"

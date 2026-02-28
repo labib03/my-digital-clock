@@ -11,9 +11,12 @@ import TimerSection from "./_components/TimerSection";
 import TaskPanel from "./_components/TaskPanel";
 import ThemeDecoration from "./_components/ThemeDecoration";
 
+import { useLanguage } from "@/components/shared/LanguageContext";
+
 // ─── Pomodoro Page (orchestration only — no JSX details) ─────────────────────
 
 export default function PomodoroPage() {
+    const { t } = useLanguage();
     // ── State ──────────────────────────────────────────────────────────────
     const [phase, setPhase] = useState<Phase>("focus");
     const [timeLeft, setTimeLeft] = useState(PHASES.focus.duration);
@@ -136,11 +139,17 @@ export default function PomodoroPage() {
 
     // ── Document title ─────────────────────────────────────────────────────
     useEffect(() => {
+        const getPhaseLabel = () => {
+            if (phase === "focus") return t('focus');
+            if (phase === "short") return t('shortBreak');
+            if (phase === "long") return t('longBreak');
+            return "";
+        };
         document.title = running
-            ? `${fmt(timeLeft)} — ${current.label}`
+            ? `${fmt(timeLeft)} — ${getPhaseLabel()}`
             : "Pomodoro · Mawaqit";
         return () => { document.title = "Mawaqit"; };
-    }, [timeLeft, running, current.label]);
+    }, [timeLeft, running, phase, t]);
 
     // ── Fullscreen Logic ───────────────────────────────────────────────────
     const toggleFullscreen = useCallback(() => {

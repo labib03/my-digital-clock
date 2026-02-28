@@ -1,5 +1,6 @@
 import React from 'react';
 import { type PrayerTimes, type HijriDate } from "@/lib/prayerService";
+import { useLanguage } from '../shared/LanguageContext';
 
 interface Props {
     locationStatus: 'loading' | 'error' | 'done';
@@ -14,6 +15,7 @@ interface Props {
 export const InfoBar: React.FC<Props> = ({
     locationStatus, location, fullDateStr, hijriDate, prayerTimes, setIsSettingsOpen, theme
 }) => {
+    const { t, language } = useLanguage();
     return (
         <div className="absolute bottom-10 sm:bottom-12 left-0 right-0 flex flex-col sm:grid sm:grid-cols-3 items-center px-4 sm:px-10 lg:px-14 gap-6 sm:gap-4 md:gap-0">
             {/* Col 1: Location — left aligned on desktop, centered on mobile */}
@@ -21,12 +23,12 @@ export const InfoBar: React.FC<Props> = ({
                 {locationStatus === 'loading' ? (
                     <div className={`flex items-center gap-2 ${theme.textMuted}`}>
                         <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-                        <span className="text-xs sm:text-sm font-medium">Detecting location...</span>
+                        <span className="text-xs sm:text-sm font-medium">{t('detectingLocation')}</span>
                     </div>
                 ) : locationStatus === 'error' ? (
                     <div className={`flex items-center gap-1.5 ${theme.textMuted}`}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                        <span className="text-xs sm:text-sm font-medium">Location unavailable</span>
+                        <span className="text-xs sm:text-sm font-medium">{t('locationUnavailable')}</span>
                     </div>
                 ) : (
                     <div className={`flex items-center gap-1.5 font-medium text-xs sm:text-sm ${theme.textMuted}`}>
@@ -42,7 +44,7 @@ export const InfoBar: React.FC<Props> = ({
                     <div className={`font-bold text-sm sm:text-base tracking-tight ${theme.text} opacity-90`}>{fullDateStr}</div>
                     {hijriDate && (
                         <div className="text-[10px] sm:text-[11px] font-medium opacity-40 uppercase tracking-[0.15em]">
-                            {hijriDate.day} {hijriDate.month.en} {hijriDate.year} AH
+                            {hijriDate.day} {hijriDate.month.en} {hijriDate.year} {language === 'id' ? 'H' : 'AH'}
                         </div>
                     )}
                 </div>
@@ -70,7 +72,7 @@ export const InfoBar: React.FC<Props> = ({
             <div className="flex flex-row justify-center sm:justify-end items-center order-3 sm:scale-100">
                 <button onClick={() => setIsSettingsOpen(true)}
                     className={`p-2.5 sm:p-3 rounded-full transition cursor-pointer ${theme.toggleBg} border border-black/5 dark:border-white/5 hover:opacity-100 active:scale-95 shadow-sm group`}
-                    aria-label="Clock Settings" title="Settings">
+                    aria-label={t('settings')} title={t('settings')}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" className="sm:w-5 sm:h-5 transition-transform duration-500 group-hover:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
             </div>

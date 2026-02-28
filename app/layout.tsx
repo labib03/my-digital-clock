@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     },
 };
 
+import { LanguageProvider } from "@/components/shared/LanguageContext";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -35,8 +37,10 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="antialiased min-h-screen flex flex-col">
-                {children}
-                <PWAInstallPrompt />
+                <LanguageProvider>
+                    {children}
+                    <PWAInstallPrompt />
+                </LanguageProvider>
             </body>
         </html>
     );

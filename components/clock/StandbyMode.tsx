@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { PrayerTimes, getNextPrayer } from '@/lib/prayerService';
+import { useLanguage } from '../shared/LanguageContext';
 import { AnimatedDigitGroup } from "../shared/AnimatedDigitGroup";
 import { FloatingMetaballs } from "../shared/FloatingMetaballs";
 import { SubtleDistortion } from "../shared/SubtleDistortion";
@@ -23,6 +24,7 @@ interface Props {
 export const StandbyMode: React.FC<Props> = ({
     setIsStandbyMode, theme, hours, minutes, seconds, animationStyle, is24Hour, ampm, prayerTimes, time, standbyBg
 }) => {
+    const { t } = useLanguage();
     // ─── Dynamic Theme Logic (Ambient Intelligence) ───
     const getDynamicColors = () => {
         if (!prayerTimes) return null;
@@ -74,7 +76,7 @@ export const StandbyMode: React.FC<Props> = ({
             {/* Exit button */}
             <div onClick={() => setIsStandbyMode(false)}
                 className={`absolute top-6 right-6 cursor-pointer p-3 rounded-full transition-all duration-300 z-20 ${theme.standbyBtn}`}
-                title="Exit Standby">
+                title={t('standby')}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
             </div>
             <div className="flex flex-col items-center justify-center select-none gap-0">
@@ -106,10 +108,10 @@ export const StandbyMode: React.FC<Props> = ({
             {/* Next Prayer + Countdown */}
             {prayerTimes && (() => {
                 const nextKey = getNextPrayer(prayerTimes);
-                const prayerLabels: Record<string, { en: string; ar: string }> = {
-                    Fajr: { en: 'Fajr', ar: 'الفجر' }, Sunrise: { en: 'Sunrise', ar: 'الشروق' },
-                    Dhuhr: { en: 'Dhuhr', ar: 'الظهر' }, Asr: { en: 'Asr', ar: 'العصر' },
-                    Maghrib: { en: 'Maghrib', ar: 'المغرب' }, Isha: { en: 'Isha', ar: 'العشاء' },
+                const prayerLabels: Record<string, string> = {
+                    Fajr: t('fajr'), Sunrise: t('sunrise'),
+                    Dhuhr: t('dhuhr'), Asr: t('asr'),
+                    Maghrib: t('maghrib'), Isha: t('isha'),
                 };
                 const label = prayerLabels[nextKey];
                 const [nh, nm] = prayerTimes[nextKey].split(':').map(Number);
@@ -125,7 +127,7 @@ export const StandbyMode: React.FC<Props> = ({
                         {/* 3 Information Grouped Minimally */}
                         <div className="flex items-center gap-3">
                             <span className={`uppercase font-bold tracking-[0.2em] ${theme.textMuted}`} style={{ fontSize: 'min(1vw, 0.65rem)' }}>
-                                {label.en}
+                                {label}
                             </span>
                             <span className={`font-black geo-nums ${theme.text}`} style={{ fontSize: 'min(2.8vw, 4vh)', letterSpacing: '-0.02em' }}>
                                 {prayerTimes[nextKey]}

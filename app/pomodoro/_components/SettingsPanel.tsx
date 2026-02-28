@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import type { Phase, SoundOption } from "./types";
-import { PHASES } from "./types";
+import type { SoundOption } from "./types";
+import { useLanguage } from "@/components/shared/LanguageContext";
 
 // ─── SettingsPanel ────────────────────────────────────────────────────────────
 
@@ -21,6 +21,8 @@ export default function SettingsPanel({
     show, isDark, cardBg, customFocus, sound, accentColor,
     onFocusChange, onSoundChange,
 }: SettingsPanelProps) {
+    const { t, language, setLanguage } = useLanguage();
+
     return (
         <AnimatePresence>
             {show && (
@@ -36,8 +38,8 @@ export default function SettingsPanel({
                         {/* Focus Duration */}
                         <div className="flex items-center justify-between gap-4 flex-1">
                             <div>
-                                <p className="text-sm font-semibold">Focus Duration</p>
-                                <p className="text-xs opacity-40">minutes per session</p>
+                                <p className="text-sm font-semibold">{t('focusDuration')}</p>
+                                <p className="text-xs opacity-40">{t('focusDurationDesc')}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button onClick={() => onFocusChange(Math.max(5, customFocus - 5))}
@@ -55,17 +57,36 @@ export default function SettingsPanel({
                         {/* Ambient Sound */}
                         <div className="flex items-center justify-between gap-4 flex-1">
                             <div>
-                                <p className="text-sm font-semibold">Ambient Sound</p>
-                                <p className="text-xs opacity-40">plays during focus sessions</p>
+                                <p className="text-sm font-semibold">{t('ambientSound')}</p>
+                                <p className="text-xs opacity-40">{t('ambientSoundDesc')}</p>
                             </div>
                             <div className={`flex rounded-full p-1 gap-1 border ${cardBg} text-[9px] uppercase tracking-widest font-bold`}>
                                 {(["off", "white", "brown"] as const).map(opt => (
                                     <button key={opt} onClick={() => onSoundChange(opt)}
                                         className={`px-2.5 py-1.5 rounded-full cursor-pointer transition ${sound === opt ? "text-white shadow-md" : "opacity-40 hover:opacity-70"}`}
                                         style={sound === opt ? { backgroundColor: accentColor } : {}}>
-                                        {opt === "off" ? "Off" : opt === "white" ? "White" : "Brown"}
+                                        {opt === "off" ? t('soundOff') : opt === "white" ? t('soundWhite') : t('soundBrown')}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Language */}
+                        <div className="flex items-center justify-between gap-4 flex-1">
+                            <div>
+                                <p className="text-sm font-semibold">{t('language')}</p>
+                            </div>
+                            <div className={`flex rounded-full p-1 gap-1 border ${cardBg} text-[9px] uppercase tracking-widest font-bold`}>
+                                <button onClick={() => setLanguage('en')}
+                                    className={`px-2.5 py-1.5 rounded-full cursor-pointer transition ${language === 'en' ? "text-white shadow-md" : "opacity-40 hover:opacity-70"}`}
+                                    style={language === 'en' ? { backgroundColor: accentColor } : {}}>
+                                    EN
+                                </button>
+                                <button onClick={() => setLanguage('id')}
+                                    className={`px-2.5 py-1.5 rounded-full cursor-pointer transition ${language === 'id' ? "text-white shadow-md" : "opacity-40 hover:opacity-70"}`}
+                                    style={language === 'id' ? { backgroundColor: accentColor } : {}}>
+                                    ID
+                                </button>
                             </div>
                         </div>
 
