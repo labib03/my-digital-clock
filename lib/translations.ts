@@ -12,8 +12,10 @@ export const translations = {
     standby: "Standby",
     morph: "Morph",
     liquid: "Liquid",
+    static: "Static",
     metaballs: "Metaballs",
     distortion: "Distortion",
+    css: "Pure CSS",
     none: "None",
 
     // Dates
@@ -132,8 +134,10 @@ export const translations = {
     standby: "Siaga",
     morph: "Morph",
     liquid: "Liquid",
+    static: "Statis",
     metaballs: "Metaballs",
     distortion: "Distorsi",
+    css: "CSS Murni",
     none: "Tidak ada",
 
     // Dates

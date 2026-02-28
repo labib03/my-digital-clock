@@ -9,10 +9,10 @@ interface Props {
     theme: any;
     is24Hour: boolean;
     setIs24Hour: (val: boolean) => void;
-    animationStyle: 'morph' | 'liquid';
-    setAnimationStyle: (val: 'morph' | 'liquid') => void;
-    standbyBg: 'metaballs' | 'distortion' | 'none';
-    setStandbyBg: (val: 'metaballs' | 'distortion' | 'none') => void;
+    animationStyle: 'morph' | 'liquid' | 'static';
+    setAnimationStyle: (val: 'morph' | 'liquid' | 'static') => void;
+    standbyBg: 'metaballs' | 'distortion' | 'css' | 'none';
+    setStandbyBg: (val: 'metaballs' | 'distortion' | 'css' | 'none') => void;
 }
 
 export const SettingsModal: React.FC<Props> = ({
@@ -48,78 +48,86 @@ export const SettingsModal: React.FC<Props> = ({
                             </button>
                         </div>
 
-                        <div className="flex flex-col gap-5">
+                        <div className="flex flex-col gap-7">
                             {/* Time Format */}
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-semibold ${theme.text}`}>{t('timeFormat')}</span>
-                                    <span className={`text-xs ${theme.textMuted} opacity-70`}>{t('timeFormatDesc')}</span>
+                            <div className="flex justify-between items-center gap-4">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className={`text-sm font-bold ${theme.text}`}>{t('timeFormat')}</span>
+                                    <span className={`text-[11px] ${theme.textMuted} opacity-60 leading-tight line-clamp-2`}>{t('timeFormatDesc')}</span>
                                 </div>
-                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 ${theme.toggleBg}`}>
+                                <div className={`flex shrink-0 shadow-sm border rounded-xl p-1 gap-1 ${theme.toggleBg}`}>
                                     <div onClick={() => setIs24Hour(false)}
-                                        className={`px-3 py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${!is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
-                                        12h
+                                        className={`px-4 py-1.5 rounded-[10px] transition cursor-pointer font-bold text-xs ${!is24Hour ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
+                                        12H
                                     </div>
                                     <div onClick={() => setIs24Hour(true)}
-                                        className={`px-3 py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${is24Hour ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
-                                        24h
+                                        className={`px-4 py-1.5 rounded-[10px] transition cursor-pointer font-bold text-xs ${is24Hour ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
+                                        24H
                                     </div>
                                 </div>
                             </div>
 
                             {/* Animation Style */}
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-semibold ${theme.text}`}>{t('animations')}</span>
-                                    <span className={`text-xs ${theme.textMuted} opacity-70`}>{t('animationsDesc')}</span>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className={`text-sm font-bold ${theme.text}`}>{t('animations')}</span>
+                                    <span className={`text-[11px] ${theme.textMuted} opacity-60 leading-tight`}>{t('animationsDesc')}</span>
                                 </div>
-                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 text-[9px] sm:text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
+                                <div className={`flex shadow-sm border rounded-xl p-1 gap-1 text-[10px] uppercase tracking-wider font-bold ${theme.toggleBg}`}>
                                     <div onClick={() => setAnimationStyle('morph')}
-                                        className={`px-2.5 sm:px-3 py-1.5 rounded-full transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`flex-1 text-center py-2 rounded-[10px] transition cursor-pointer ${animationStyle === 'morph' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         {t('morph')}
                                     </div>
                                     <div onClick={() => setAnimationStyle('liquid')}
-                                        className={`px-2.5 sm:px-3 py-1.5 rounded-full transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`flex-1 text-center py-2 rounded-[10px] transition cursor-pointer ${animationStyle === 'liquid' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         {t('liquid')}
+                                    </div>
+                                    <div onClick={() => setAnimationStyle('static')}
+                                        className={`flex-1 text-center py-2 rounded-[10px] transition cursor-pointer ${animationStyle === 'static' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
+                                        {t('static')}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Standby Background */}
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-semibold ${theme.text}`}>{t('standbyBg')}</span>
-                                    <span className={`text-xs ${theme.textMuted} opacity-70`}>{t('standbyBgDesc')}</span>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className={`text-sm font-bold ${theme.text}`}>{t('standbyBg')}</span>
+                                    <span className={`text-[11px] ${theme.textMuted} opacity-60 leading-tight`}>{t('standbyBgDesc')}</span>
                                 </div>
-                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 text-[9px] sm:text-[10px] uppercase tracking-widest font-bold ${theme.toggleBg}`}>
+                                <div className={`grid grid-cols-2 shadow-sm border rounded-xl p-1 gap-1 text-[10px] uppercase tracking-wider font-bold ${theme.toggleBg}`}>
                                     <div onClick={() => setStandbyBg('metaballs')}
-                                        className={`px-2 py-1.5 rounded-full transition cursor-pointer ${standbyBg === 'metaballs' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`py-2 rounded-[10px] text-center transition cursor-pointer ${standbyBg === 'metaballs' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         {t('metaballs')}
                                     </div>
                                     <div onClick={() => setStandbyBg('distortion')}
-                                        className={`px-2 py-1.5 rounded-full transition cursor-pointer ${standbyBg === 'distortion' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`py-2 rounded-[10px] text-center transition cursor-pointer ${standbyBg === 'distortion' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         {t('distortion')}
                                     </div>
+                                    <div onClick={() => setStandbyBg('css')}
+                                        className={`py-2 rounded-[10px] text-center transition cursor-pointer ${standbyBg === 'css' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
+                                        {t('css')}
+                                    </div>
                                     <div onClick={() => setStandbyBg('none')}
-                                        className={`px-2 py-1.5 rounded-full transition cursor-pointer ${standbyBg === 'none' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`py-2 rounded-[10px] text-center transition cursor-pointer ${standbyBg === 'none' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         {t('none')}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Language */}
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-semibold ${theme.text}`}>{t('language')}</span>
-                                    <span className={`text-xs ${theme.textMuted} opacity-70`}>Choose your language</span>
+                            <div className="flex justify-between items-center gap-4 pt-1">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className={`text-sm font-bold ${theme.text}`}>{t('language')}</span>
+                                    <span className={`text-[11px] ${theme.textMuted} opacity-60 leading-tight`}>Choose your language</span>
                                 </div>
-                                <div className={`flex shadow-sm border rounded-full p-1 gap-1 ${theme.toggleBg}`}>
+                                <div className={`flex shrink-0 shadow-sm border rounded-xl p-1 gap-1 ${theme.toggleBg}`}>
                                     <div onClick={() => setLanguage('en')}
-                                        className={`px-3 py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${language === 'en' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`px-4 py-1.5 rounded-[10px] transition cursor-pointer font-bold text-xs ${language === 'en' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         EN
                                     </div>
                                     <div onClick={() => setLanguage('id')}
-                                        className={`px-3 py-1.5 rounded-full transition cursor-pointer font-semibold text-xs sm:text-sm ${language === 'id' ? `${theme.toggleActive} shadow-md` : theme.toggleInactive}`}>
+                                        className={`px-4 py-1.5 rounded-[10px] transition cursor-pointer font-bold text-xs ${language === 'id' ? `${theme.toggleActive} shadow-sm` : theme.toggleInactive}`}>
                                         ID
                                     </div>
                                 </div>

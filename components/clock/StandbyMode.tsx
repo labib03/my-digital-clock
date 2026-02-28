@@ -5,6 +5,7 @@ import { useLanguage } from '../shared/LanguageContext';
 import { AnimatedDigitGroup } from "../shared/AnimatedDigitGroup";
 import { FloatingMetaballs } from "../shared/FloatingMetaballs";
 import { SubtleDistortion } from "../shared/SubtleDistortion";
+import { CssMinimalBg } from "@/components/shared/CssMinimalBg";
 
 interface Props {
     setIsStandbyMode: (val: boolean) => void;
@@ -12,12 +13,12 @@ interface Props {
     hours: string;
     minutes: string;
     seconds: string;
-    animationStyle: 'morph' | 'liquid';
+    animationStyle: 'morph' | 'liquid' | 'static';
     is24Hour: boolean;
     ampm: string;
     prayerTimes: PrayerTimes | null;
     time: Date;
-    standbyBg: 'metaballs' | 'distortion' | 'none';
+    standbyBg: 'metaballs' | 'distortion' | 'css' | 'none';
     colors?: string[];
 }
 
@@ -72,6 +73,7 @@ export const StandbyMode: React.FC<Props> = ({
             {/* Absolute Background Layer */}
             {standbyBg === 'metaballs' && <FloatingMetaballs isDark={theme.bg === 'bg-[#0A0A0A]'} colors={dynamicColors || undefined} />}
             {standbyBg === 'distortion' && <SubtleDistortion isDark={theme.bg === 'bg-[#0A0A0A]'} seconds={seconds} colorOverride={dynamicColors ? dynamicColors[0] : undefined} />}
+            {standbyBg === 'css' && <CssMinimalBg isDark={theme.bg === 'bg-[#0A0A0A]'} colors={dynamicColors || undefined} />}
 
             {/* Exit button */}
             <div onClick={() => setIsStandbyMode(false)}
@@ -122,10 +124,9 @@ export const StandbyMode: React.FC<Props> = ({
                 const fmt = (n: number) => String(n).padStart(2, '0');
                 return (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
-                        className="absolute bottom-12 left-0 right-0 flex justify-center items-center gap-5 opacity-40 hover:opacity-100 transition-opacity duration-700 select-none">
+                        className="absolute bottom-12 left-0 right-0 flex justify-center items-center opacity-40 hover:opacity-100 transition-opacity duration-700 select-none px-10">
 
-                        {/* 3 Information Grouped Minimally */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex-1 flex justify-end items-center gap-3">
                             <span className={`uppercase font-bold tracking-[0.2em] ${theme.textMuted}`} style={{ fontSize: 'min(1vw, 0.65rem)' }}>
                                 {label}
                             </span>
@@ -134,11 +135,13 @@ export const StandbyMode: React.FC<Props> = ({
                             </span>
                         </div>
 
-                        <div className={`w-[1px] h-4 ${theme.bgMuted} opacity-20`} />
+                        <div className={`mx-6 w-[1px] h-4 ${theme.bgMuted} opacity-20 shrink-0`} />
 
-                        <span className={`font-medium geo-nums ${theme.textMuted} opacity-60 tracking-wider`} style={{ fontSize: 'min(2vw, 2.5vh)' }}>
-                            {cdHrs > 0 ? `${fmt(cdHrs)}:` : ''}{fmt(cdMins)}:{fmt(cdSecs)}
-                        </span>
+                        <div className="flex-1 flex justify-start items-center">
+                            <span className={`font-medium geo-nums ${theme.textMuted} opacity-60 tracking-wider`} style={{ fontSize: 'min(2vw, 2.5vh)' }}>
+                                {cdHrs > 0 ? `${fmt(cdHrs)}:` : ''}{fmt(cdMins)}:{fmt(cdSecs)}
+                            </span>
+                        </div>
                     </motion.div>
                 );
             })()}

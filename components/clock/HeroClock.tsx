@@ -5,7 +5,7 @@ interface Props {
     hours: string;
     minutes: string;
     seconds: string;
-    animationStyle: 'morph' | 'liquid';
+    animationStyle: 'morph' | 'liquid' | 'static';
     is24Hour: boolean;
     ampm: string;
     theme: any;

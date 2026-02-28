@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
     value: string;
-    animationStyle: 'morph' | 'liquid';
+    animationStyle: 'morph' | 'liquid' | 'static';
 }
 
 export const AnimatedDigitGroup: React.FC<Props> = ({ value, animationStyle }) => {
@@ -19,20 +19,29 @@ export const AnimatedDigitGroup: React.FC<Props> = ({ value, animationStyle }) =
                             key={`${digit}`}
                             initial={animationStyle === 'morph'
                                 ? { y: "80%", opacity: 0, scaleY: 0.2 }
-                                : { filter: 'blur(8px)', opacity: 0, scale: 0.95 }
+                                : animationStyle === 'static'
+                                    ? { opacity: 1 }
+                                    : { filter: 'blur(8px)', opacity: 0, scale: 0.95 }
                             }
                             animate={animationStyle === 'morph'
                                 ? { y: 0, opacity: 1, scaleY: 1 }
-                                : { filter: 'blur(0px)', opacity: 1, scale: 1 }
+                                : animationStyle === 'static'
+                                    ? { opacity: 1 }
+                                    : { filter: 'blur(0px)', opacity: 1, scale: 1 }
                             }
                             exit={animationStyle === 'morph'
                                 ? { y: "-80%", opacity: 0, scaleY: 0.2 }
-                                : { filter: 'blur(8px)', opacity: 0, scale: 1.05 }
+                                : animationStyle === 'static'
+                                    ? { opacity: 1 }
+                                    : { filter: 'blur(8px)', opacity: 0, scale: 1.05 }
                             }
-                            transition={{
-                                duration: 0.4,
-                                ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
-                            }}
+                            transition={animationStyle === 'static'
+                                ? { duration: 0 }
+                                : {
+                                    duration: 0.4,
+                                    ease: animationStyle === 'morph' ? [0.34, 1.56, 0.64, 1] : "easeInOut"
+                                }
+                            }
                         >
                             {digit}
                         </motion.div>

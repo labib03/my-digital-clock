@@ -19,6 +19,7 @@ export const Clock = () => {
     const [time, setTime] = useState<Date | null>(null);
     const [is24Hour, setIs24Hour] = useState<boolean>(true);
     const [isStandbyMode, setIsStandbyMode] = useState<boolean>(false);
+    const [isSuperMinimal, setIsSuperMinimal] = useState<boolean>(false);
 
     const toggleStandby = (val: boolean) => {
         setIsStandbyMode(val);
@@ -39,8 +40,8 @@ export const Clock = () => {
     const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
     const [hijriDate, setHijriDate] = useState<HijriDate | null>(null);
     const [prayerStatus, setPrayerStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
-    const [animationStyle, setAnimationStyle] = useState<'morph' | 'liquid'>('morph');
-    const [standbyBg, setStandbyBg] = useState<'metaballs' | 'distortion' | 'none'>('metaballs');
+    const [animationStyle, setAnimationStyle] = useState<'morph' | 'liquid' | 'static'>('morph');
+    const [standbyBg, setStandbyBg] = useState<'metaballs' | 'distortion' | 'css' | 'none'>('metaballs');
     const [isClient, setIsClient] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -58,7 +59,7 @@ export const Clock = () => {
             setAnimationStyle(savedStyle as 'morph' | 'liquid');
         }
         if (savedStandby !== null) {
-            setStandbyBg(savedStandby === 'viscous' ? 'distortion' : (savedStandby as 'metaballs' | 'distortion' | 'none'));
+            setStandbyBg(savedStandby === 'viscous' ? 'distortion' : (savedStandby as 'metaballs' | 'distortion' | 'css' | 'none'));
         }
     }, []);
 
@@ -77,6 +78,11 @@ export const Clock = () => {
         if (!isClient) return;
         localStorage.setItem('clock-standbybg', standbyBg);
     }, [standbyBg, isClient]);
+
+    useEffect(() => {
+        if (!isClient) return;
+        localStorage.setItem('clock-minimal', String(isSuperMinimal));
+    }, [isSuperMinimal, isClient]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -218,25 +224,25 @@ export const Clock = () => {
 
     return (
         <div className={`w-full flex flex-col transition-colors duration-300 ${theme.bg} ${theme.text}`}
-            style={isStandbyMode ? { position: 'fixed', inset: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: 50 } : {}}
         >
-            {/* ─── STANDBY MODE ─── */}
             {isStandbyMode ? (
-                <StandbyMode
-                    setIsStandbyMode={toggleStandby}
-                    theme={theme}
-                    hours={hours}
-                    minutes={minutes}
-                    seconds={seconds}
-                    animationStyle={animationStyle}
-                    is24Hour={is24Hour}
-                    ampm={ampm}
-                    prayerTimes={prayerTimes}
-                    time={time}
-                    standbyBg={standbyBg}
-                />
+                <div className="fixed inset-0 w-screen h-screen overflow-hidden z-50">
+                    <StandbyMode
+                        setIsStandbyMode={toggleStandby}
+                        theme={theme}
+                        hours={hours}
+                        minutes={minutes}
+                        seconds={seconds}
+                        animationStyle={animationStyle}
+                        is24Hour={is24Hour}
+                        ampm={ampm}
+                        prayerTimes={prayerTimes}
+                        time={time}
+                        standbyBg={standbyBg}
+                    />
+                </div>
             ) : (
-                <>
+                <div className="w-full flex flex-col">
                     {/* ─── NORMAL MODE SECTION 1: Full-viewport hero clock ─── */}
                     <section className="relative w-full flex flex-col" style={{ height: '100svh' }}>
                         {/* Header overlaid */}
@@ -273,9 +279,8 @@ export const Clock = () => {
                             <PrayerTimesCards prayerStatus={prayerStatus} coords={coords} prayerTimes={prayerTimes} theme={theme} />
                         </div>
                     </section>
-                </>
-            )
-            }
+                </div>
+            )}
             {/* Conditional Hidden SVG Filter for Gooey Effect */}
             {animationStyle === 'liquid' && (
                 <svg className="hidden" aria-hidden="true">
