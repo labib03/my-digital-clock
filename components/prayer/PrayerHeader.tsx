@@ -58,7 +58,7 @@ export const PrayerHeader: React.FC<Props> = ({ hijriDate, prayerTimes, isDark, 
                     <div className={`flex flex-col items-start md:items-end gap-1.5 md:gap-1 text-left md:text-right p-5 md:p-0 rounded-[1.5rem] md:rounded-none border md:border-none shadow-sm md:shadow-none ${isDark ? 'bg-[#1A1A1A] md:bg-transparent border-[#2A2A2A]' : 'bg-white/50 md:bg-transparent border-black/5'}`}>
                         <span className={`text-[10px] sm:text-xs uppercase tracking-widest opacity-60 font-bold mb-1 ${theme.textMuted}`}>{t('nextPrayer')}</span>
                         <div className={`flex items-baseline gap-2 ${theme.text}`}>
-                            <span className="text-base font-semibold" style={{ fontFamily: 'serif' }}>{prayerLabel[nextKey]}</span>
+                            <span className="text-base font-semibold">{prayerLabel[nextKey]}</span>
                             <span className="text-sm font-medium opacity-60">{nextKey}</span>
                         </div>
                         <span className={`text-2xl font-semibold geo-nums tracking-tight ${theme.text}`} style={{ letterSpacing: '-0.03em' }}>
