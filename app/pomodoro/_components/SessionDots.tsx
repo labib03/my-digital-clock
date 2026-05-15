@@ -1,19 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { SESSIONS_UNTIL_LONG } from "./types";
-
-// ─── SessionDots ──────────────────────────────────────────────────────────────
 
 interface SessionDotsProps {
     completed: number;
+    total: number;
     color: string;
 }
 
-export default function SessionDots({ completed, color }: SessionDotsProps) {
+export default function SessionDots({ completed, total, color }: SessionDotsProps) {
     return (
         <div className="flex items-center gap-2">
-            {Array.from({ length: SESSIONS_UNTIL_LONG }).map((_, i) => (
+            {Array.from({ length: total }).map((_, i) => (
                 <motion.div key={i} className="rounded-full transition-all duration-500"
                     style={{
                         width: i < completed ? 10 : 7,

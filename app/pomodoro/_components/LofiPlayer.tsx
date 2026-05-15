@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/components/shared/LanguageContext";
+import { Radio, Play, Pause, ChevronDown, Plus, X } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface Station {
@@ -13,22 +14,6 @@ interface Station {
     custom?: boolean;
 }
 
-// ─── YouTube URL → ID parser ──────────────────────────────────────────────────
-function parseYouTubeId(input: string): string | null {
-    const trimmed = input.trim();
-    // Direct 11-char video ID
-    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
-    try {
-        const url = new URL(trimmed);
-        if (url.searchParams.get("v")) return url.searchParams.get("v");      // watch?v=
-        if (url.hostname === "youtu.be") return url.pathname.slice(1);          // youtu.be/
-        if (url.pathname.startsWith("/shorts/")) return url.pathname.split("/shorts/")[1].split("?")[0]; // /shorts/
-        if (url.pathname.startsWith("/embed/")) return url.pathname.split("/embed/")[1].split("?")[0];  // /embed/
-    } catch { /* not a URL */ }
-    return null;
-}
-
-// ─── YouTube IFrame types ─────────────────────────────────────────────────────
 interface YTPlayer {
     playVideo: () => void;
     pauseVideo: () => void;
@@ -41,22 +26,32 @@ interface YTPlayer {
 
 declare global {
     interface Window {
-        YT: {
-            Player: new (elementId: string, config: object) => YTPlayer;
-            PlayerState: { PLAYING: number; PAUSED: number; BUFFERING: number; ENDED: number; UNSTARTED: number };
-        };
+        YT: any;
         onYouTubeIframeAPIReady?: () => void;
     }
 }
 
-// ─── Waveform visual ──────────────────────────────────────────────────────────
+// ─── YouTube URL Parser ───────────────────────────────────────────────────────
+function parseYouTubeId(input: string): string | null {
+    const trimmed = input.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+    try {
+        const url = new URL(trimmed);
+        if (url.searchParams.get("v")) return url.searchParams.get("v");
+        if (url.hostname === "youtu.be") return url.pathname.slice(1);
+        if (url.pathname.startsWith("/shorts/")) return url.pathname.split("/shorts/")[1].split("?")[0];
+        if (url.pathname.startsWith("/embed/")) return url.pathname.split("/embed/")[1].split("?")[0];
+    } catch { }
+    return null;
+}
+
 function Waveform({ color }: { color: string }) {
     return (
-        <div className="flex items-center gap-[2px]" aria-hidden="true">
-            {[0.6, 1, 0.7, 0.9, 0.5].map((h, i) => (
-                <motion.div key={i} className="w-[3px] rounded-full"
-                    style={{ backgroundColor: color, height: 14 }}
-                    animate={{ scaleY: [h, 1, h * 0.5, 0.9, h] }}
+        <div className="flex items-center gap-[3px]" aria-hidden="true">
+            {[0.5, 1, 0.5].map((h, i) => (
+                <motion.div key={i} className="w-[4.5px] rounded-full"
+                    style={{ backgroundColor: color, height: 16 }}
+                    animate={{ scaleY: [h, 1, h * 0.5, 1, h] }}
                     transition={{ duration: 0.8 + i * 0.15, repeat: Infinity, ease: "easeInOut", delay: i * 0.1 }}
                 />
             ))}
@@ -64,7 +59,6 @@ function Waveform({ color }: { color: string }) {
     );
 }
 
-// ─── LofiPlayer ───────────────────────────────────────────────────────────────
 interface LofiPlayerProps {
     isDark: boolean;
     accentColor: string;
@@ -81,7 +75,6 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
     const [volume, setVolume] = useState(60);
     const [expanded, setExpanded] = useState(false);
 
-    // ── Stations (default + custom from localStorage) ──────────────────────
     const DEFAULT_STATIONS: Station[] = [
         { id: "jfKfPfyJRdk", name: t('lofiHipHop'), mood: t('beatsToRelax'), emoji: "☕" },
     ];
@@ -91,9 +84,12 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
     const [showAddForm, setShowAddForm] = useState(false);
     const [urlInput, setUrlInput] = useState("");
     const [nameInput, setNameInput] = useState("");
-    const [addError, setAddError] = useState("");
 
-    // Load custom stations from localStorage
+    const gamePanel = isDark
+        ? "bg-[#1E1E24] border-[3px] border-[#0F0F13] shadow-[0_4px_0_#0F0F13]"
+        : "bg-white border-[3px] border-[#E2E8F0] shadow-[0_4px_0_#CBD5E1]";
+
+    // Memuat stasiun dari localStorage
     useEffect(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -101,33 +97,19 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                 const custom: Station[] = JSON.parse(saved);
                 setStations([...DEFAULT_STATIONS, ...custom]);
             }
-        } catch { /* ignore */ }
+        } catch { }
     }, []);
-
-    // Update default stations when language changes
-    useEffect(() => {
-        setStations(prev => [
-            { id: "jfKfPfyJRdk", name: t('lofiHipHop'), mood: t('beatsToRelax'), emoji: "☕" },
-            ...prev.filter(s => s.custom)
-        ]);
-    }, [t]);
 
     const persistCustom = (all: Station[]) => {
         const custom = all.filter(s => s.custom);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
     };
 
-    const station = stations[stationIdx] ?? stations[0];
-    const cardBg = isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-gray-200";
-    const inputCls = isDark
-        ? "bg-white/5 border-white/10 placeholder:text-white/30 focus:border-white/30"
-        : "bg-gray-50 border-gray-200 placeholder:text-gray-400 focus:border-gray-400";
-
-    // ── YouTube IFrame API init ────────────────────────────────────────────
     const initPlayer = useCallback(() => {
-        if (!window.YT?.Player) return;
+        if (!window.YT || !window.YT.Player) return;
         if (playerRef.current) return;
-        new window.YT.Player("yt-lofi-hidden", {
+
+        playerRef.current = new window.YT.Player("yt-lofi-hidden", {
             videoId: DEFAULT_STATIONS[0].id,
             playerVars: { autoplay: 0, controls: 0, disablekb: 1, rel: 0, iv_load_policy: 3 },
             events: {
@@ -146,24 +128,23 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
     }, [DEFAULT_STATIONS]);
 
     useEffect(() => {
-        if (window.YT?.Player) { initPlayer(); return; }
-        const prev = window.onYouTubeIframeAPIReady;
-        window.onYouTubeIframeAPIReady = () => {
-            if (typeof prev === "function") prev();
+        if (window.YT && window.YT.Player) {
             initPlayer();
-        };
-        if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
-            const s = document.createElement("script");
-            s.src = "https://www.youtube.com/iframe_api";
-            s.async = true;
-            document.head.appendChild(s);
+        } else {
+            const prev = window.onYouTubeIframeAPIReady;
+            window.onYouTubeIframeAPIReady = () => {
+                if (typeof prev === "function") prev();
+                initPlayer();
+            };
+            if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+                const s = document.createElement("script");
+                s.src = "https://www.youtube.com/iframe_api";
+                s.async = true;
+                document.head.appendChild(s);
+            }
         }
-        return () => {
-            // playerRef.current?.destroy(); // Keep playing if possible or handle cleanup
-        };
     }, [initPlayer]);
 
-    // ── Controls ───────────────────────────────────────────────────────────
     const togglePlay = () => {
         if (!playerRef.current || !ready) return;
         playing ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
@@ -178,27 +159,18 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
         else playerRef.current.cueVideoById(vid);
     };
 
-    const handleVolume = (val: number) => {
-        setVolume(val);
-        playerRef.current?.setVolume(val);
-    };
-
-    // ── Add custom station ─────────────────────────────────────────────────
     const handleAddStation = () => {
-        setAddError("");
         const videoId = parseYouTubeId(urlInput);
-        if (!videoId) { setAddError(t('invalidYoutubeUrl')); return; }
-        const name = nameInput.trim() || t('customStation');
-        const newStation: Station = { id: videoId, name, mood: "Custom", emoji: "🎵", custom: true };
+        if (!videoId) return;
+        const name = nameInput.trim() || "Custom Station";
+        const newStation: Station = { id: videoId, name, mood: "User Upload", emoji: "🎵", custom: true };
         const updated = [...stations, newStation];
         setStations(updated);
         persistCustom(updated);
         setUrlInput("");
         setNameInput("");
         setShowAddForm(false);
-        // Auto-switch to new station
         changeStation(updated.length - 1);
-        setStationIdx(updated.length - 1);
     };
 
     const removeStation = (idx: number) => {
@@ -206,122 +178,84 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
         const updated = stations.filter((_, i) => i !== idx);
         setStations(updated);
         persistCustom(updated);
-        if (stationIdx >= updated.length) {
-            setStationIdx(0);
-            changeStation(0);
-        }
+        if (stationIdx >= updated.length) setStationIdx(0);
     };
 
-    // ── Render ─────────────────────────────────────────────────────────────
+    const station = stations[stationIdx] ?? stations[0];
+
     return (
         <>
-            {/* Hidden YouTube iframe target */}
-            <div id="yt-lofi-hidden"
-                style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none", top: -9999 }}
-            />
+            <div id="yt-lofi-hidden" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none", top: -9999 }} />
 
-            <div className={`w-full rounded-2xl border ${cardBg} overflow-hidden transition-colors duration-300`}>
+            <div className={`w-full rounded-3xl ${gamePanel} overflow-hidden transition-colors duration-300`}>
+                <div onClick={() => setExpanded(!expanded)}
+                    className="w-full flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors select-none">
 
-                {/* ── Header (collapse toggle + play/pause) ── */}
-                <div
-                    role="button" tabIndex={0}
-                    onClick={() => setExpanded(e => !e)}
-                    onKeyDown={e => (e.key === "Enter" || e.key === " ") && setExpanded(e => !e)}
-                    className="w-full flex items-center justify-between px-4 py-3 gap-3 cursor-pointer hover:opacity-80 transition-opacity select-none"
-                    aria-label="Toggle lofi player" aria-expanded={expanded}>
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-12 flex items-center justify-center">
-                            {playing
-                                ? <Waveform color={accentColor} />
-                                : <div className="flex items-center gap-[2px]">
-                                    {[10, 14, 8, 12, 6].map((h, i) => (
-                                        <div key={i} className="w-[3px] rounded-full opacity-30" style={{ height: h, backgroundColor: "currentColor" }} />
-                                    ))}
-                                </div>
-                            }
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-12 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/10 border-2 border-black/10 dark:border-white/10">
+                            {playing ? <Waveform color={accentColor} /> : <Radio size={24} className="opacity-40" />}
                         </div>
                         <div className="text-left">
-                            <p className="text-xs font-bold tracking-wide leading-tight">
-                                {playing ? station.name : t('lofiRadio')}
+                            <p className="text-sm font-black tracking-wide leading-tight uppercase">
+                                {playing ? station.name : "Tavern Radio"}
                             </p>
-                            <p className="text-[10px] opacity-40 leading-tight mt-0.5">
-                                {playing ? station.mood : t('clickToPlay')}
+                            <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-0.5">
+                                {playing ? station.mood : "Comms Offline"}
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center gap-3">
                         <motion.button
                             onClick={e => { e.stopPropagation(); togglePlay(); }}
-                            disabled={!ready} whileTap={{ scale: 0.9 }}
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md disabled:opacity-30"
+                            disabled={!ready}
+                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-[0_3px_0_rgba(0,0,0,0.3)] disabled:opacity-50 active:scale-95 active:shadow-none active:translate-y-[3px] transition-all"
                             style={{ backgroundColor: accentColor }}>
                             {buffering
-                                ? <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round" /></svg>
-                                : playing
-                                    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
-                                    : <svg width="12" height="12" viewBox="0 0 24 24" fill="white" style={{ marginLeft: 1 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                                ? <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                                : playing ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-1" />
                             }
                         </motion.button>
-                        <motion.svg animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.25 }}
-                            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-30 flex-shrink-0">
-                            <polyline points="6 9 12 15 18 9" />
-                        </motion.svg>
+                        <motion.div animate={{ rotate: expanded ? 180 : 0 }} className="opacity-30 p-1">
+                            <ChevronDown size={20} strokeWidth={3} />
+                        </motion.div>
                     </div>
                 </div>
 
-                {/* ── Expanded panel ── */}
-                <AnimatePresence initial={false}>
+                <AnimatePresence>
                     {expanded && (
                         <motion.div
-                            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25, ease: "easeInOut" }} className="overflow-hidden">
-                            <div className="px-4 pb-4 flex flex-col gap-3"
-                                style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` }}>
-
-                                {/* Volume */}
-                                <div className="flex items-center gap-3 pt-3">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-40 flex-shrink-0">
-                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                                    </svg>
-                                    <div className="relative flex-1 h-1.5 rounded-full" style={{ backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }}>
+                            initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+                            className="overflow-hidden bg-black/5 dark:bg-white/5 border-t-2 border-dashed border-black/10 dark:border-white/10"
+                        >
+                            <div className="p-5 flex flex-col gap-4">
+                                {/* Volume Slider */}
+                                <div className="flex items-center gap-4">
+                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-40">VOL</span>
+                                    <div className="relative flex-1 h-3 rounded-full bg-black/10 dark:bg-white/10 border-2 border-black/5 dark:border-white/5">
                                         <div className="absolute left-0 top-0 h-full rounded-full transition-all" style={{ width: `${volume}%`, backgroundColor: accentColor }} />
-                                        <input type="range" min={0} max={100} value={volume}
-                                            onChange={e => handleVolume(Number(e.target.value))}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Volume" />
+                                        <input type="range" min={0} max={100} value={volume} onChange={e => { setVolume(Number(e.target.value)); playerRef.current?.setVolume(Number(e.target.value)); }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                     </div>
-                                    <span className="text-[10px] opacity-30 w-6 text-right geo-nums">{volume}</span>
                                 </div>
 
-                                {/* Stations list */}
-                                <div className="flex flex-col gap-1">
+                                {/* Station List */}
+                                <div className="flex flex-col gap-2 mt-2">
                                     {stations.map((s, i) => {
-                                        const active = stationIdx === i;
+                                        const isActive = stationIdx === i;
                                         return (
-                                            <div key={`${s.id}-${i}`} className="flex items-center gap-1.5">
+                                            <div key={s.id} className="flex items-center gap-2">
                                                 <button onClick={() => changeStation(i)}
-                                                    className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-left border transition-all cursor-pointer ${active
-                                                        ? "text-white shadow-md"
-                                                        : isDark
-                                                            ? "border-white/10 hover:bg-white/5"
-                                                            : "border-gray-200 hover:bg-gray-50"
-                                                        }`}
-                                                    style={active ? { backgroundColor: accentColor, borderColor: accentColor } : {}}>
-                                                    <span className="text-sm flex-shrink-0">{s.emoji}</span>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className={`font-semibold truncate leading-tight ${active ? "text-white" : ""}`} style={{ fontSize: 10 }}>{s.name}</p>
-                                                        <p className={`truncate leading-tight ${active ? "opacity-75" : "opacity-40"}`} style={{ fontSize: 9 }}>{s.mood}</p>
+                                                    className={`flex-1 flex items-center gap-3 px-3 py-2 rounded-xl border-2 transition-all text-left ${isActive ? 'border-transparent text-white' : (isDark ? 'border-white/5 bg-white/5' : 'border-black/5 bg-black/5')}`}
+                                                    style={isActive ? { backgroundColor: accentColor } : {}}>
+                                                    <span className="text-sm">{s.emoji}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[10px] font-black uppercase truncate">{s.name}</p>
+                                                        <p className={`text-[8px] font-bold uppercase truncate ${isActive ? 'opacity-70' : 'opacity-40'}`}>{s.mood}</p>
                                                     </div>
-                                                    {active && playing && <Waveform color="white" />}
                                                 </button>
-                                                {/* Remove button for custom stations */}
                                                 {s.custom && (
-                                                    <button onClick={() => removeStation(i)}
-                                                        className="w-6 h-6 rounded-lg flex items-center justify-center opacity-30 hover:opacity-70 hover:text-red-500 transition-all cursor-pointer flex-shrink-0"
-                                                        aria-label="Remove station">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                                        </svg>
+                                                    <button onClick={() => removeStation(i)} className="w-8 h-8 flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity">
+                                                        <X size={14} strokeWidth={3} />
                                                     </button>
                                                 )}
                                             </div>
@@ -329,45 +263,22 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
                                     })}
                                 </div>
 
-                                {/* Add custom station */}
-                                <AnimatePresence>
-                                    {showAddForm ? (
-                                        <motion.div key="form"
-                                            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-                                            className="flex flex-col gap-2">
-                                            <input value={urlInput} onChange={e => setUrlInput(e.target.value)}
-                                                placeholder={t('youtubeUrlPlaceholder')}
-                                                className={`text-xs px-3 py-2 rounded-lg border outline-none transition w-full ${inputCls}`} />
-                                            <input value={nameInput} onChange={e => setNameInput(e.target.value)}
-                                                placeholder={t('stationNamePlaceholder')}
-                                                className={`text-xs px-3 py-2 rounded-lg border outline-none transition w-full ${inputCls}`} />
-                                            {addError && <p className="text-[10px] text-red-400">{addError}</p>}
-                                            <div className="flex gap-2">
-                                                <button onClick={handleAddStation}
-                                                    className="flex-1 py-1.5 rounded-lg text-white text-[10px] font-bold cursor-pointer transition active:scale-95"
-                                                    style={{ backgroundColor: accentColor }}>
-                                                    {t('addStation')}
-                                                </button>
-                                                <button onClick={() => { setShowAddForm(false); setAddError(""); }}
-                                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer border transition ${isDark ? "border-white/10 hover:bg-white/5" : "border-gray-200 hover:bg-gray-50"}`}>
-                                                    {t('cancel')}
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.button key="btn"
-                                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                            onClick={() => setShowAddForm(true)}
-                                            className={`w-full py-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-80 cursor-pointer transition flex items-center justify-center gap-1.5 ${isDark ? "border-white/10" : "border-gray-200"}`}>
-                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                                            {t('addYoutubeStation')}
-                                        </motion.button>
-                                    )}
-                                </AnimatePresence>
-
-                                <p className="text-[9px] opacity-20 text-center">
-                                    {t('streamsViaYoutube')}
-                                </p>
+                                {/* Add Custom Form */}
+                                {showAddForm ? (
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        <input value={urlInput} onChange={e => setUrlInput(e.target.value)} placeholder="YouTube URL..." className="text-[10px] font-bold px-3 py-2 rounded-lg bg-black/10 dark:bg-white/10 outline-none" />
+                                        <input value={nameInput} onChange={e => setNameInput(e.target.value)} placeholder="Station Name..." className="text-[10px] font-bold px-3 py-2 rounded-lg bg-black/10 dark:bg-white/10 outline-none" />
+                                        <div className="flex gap-2">
+                                            <button onClick={handleAddStation} className="flex-1 py-2 rounded-lg bg-green-500 text-white text-[10px] font-black uppercase">Add</button>
+                                            <button onClick={() => setShowAddForm(false)} className="flex-1 py-2 rounded-lg bg-black/20 text-[10px] font-black uppercase">Cancel</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => setShowAddForm(true)} className="flex items-center justify-center gap-2 w-full py-2 border-2 border-dashed border-black/10 dark:border-white/10 rounded-xl opacity-40 hover:opacity-100 transition-opacity mt-2">
+                                        <Plus size={14} strokeWidth={3} />
+                                        <span className="text-[10px] font-black uppercase">Add Station</span>
+                                    </button>
+                                )}
                             </div>
                         </motion.div>
                     )}

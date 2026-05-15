@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-import { PHASES, SESSIONS_UNTIL_LONG, type Phase, type SoundOption } from "./_components/types";
+import { DEFAULT_SETTINGS, PHASES, type Phase, type SoundOption } from "./_components/types";
 import { playBell, createNoiseNode } from "./_components/audio";
 
 import PomodoroHeader from "./_components/PomodoroHeader";
@@ -19,14 +19,18 @@ export default function PomodoroPage() {
     const { t } = useLanguage();
     // ── State ──────────────────────────────────────────────────────────────
     const [phase, setPhase] = useState<Phase>("focus");
-    const [timeLeft, setTimeLeft] = useState(PHASES.focus.duration);
     const [running, setRunning] = useState(false);
     const [sessionsDone, setSessionsDone] = useState(0);
     const [isDark, setIsDark] = useState(false);
-    const [customFocus, setCustomFocus] = useState(25);
     const [showSettings, setShowSettings] = useState(false);
     const [sound, setSound] = useState<SoundOption>("off");
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const [customFocus, setCustomFocus] = useState(DEFAULT_SETTINGS.focusDuration);
+    const [longBreakDuration, setLongBreakDuration] = useState(DEFAULT_SETTINGS.longBreakDuration);
+    const [sessionsUntilLong, setSessionsUntilLong] = useState(DEFAULT_SETTINGS.sessionsUntilLong);
+    const [shortBreakDuration, setShortBreakDuration] = useState(DEFAULT_SETTINGS.shortBreakDuration);
+    const [timeLeft, setTimeLeft] = useState(customFocus * 60);
 
     // ── Refs ───────────────────────────────────────────────────────────────
     const workerRef = useRef<Worker | null>(null);
@@ -34,9 +38,17 @@ export default function PomodoroPage() {
     const noiseNodeRef = useRef<AudioBufferSourceNode | null>(null);
     const noiseGainRef = useRef<GainNode | null>(null);
 
+    // ── Helper Pembaca Durasi ──────────────────────────────────────────────
+    // Fungsi ini menggantikan PHASES[p].duration
+    const getPhaseDuration = useCallback((p: Phase) => {
+        if (p === "focus") return customFocus * 60;
+        if (p === "long") return longBreakDuration * 60;
+        return shortBreakDuration * 60; // Sekarang mengambil dari state
+    }, [customFocus, longBreakDuration, shortBreakDuration]);
+
     // ── Derived ────────────────────────────────────────────────────────────
     const current = PHASES[phase];
-    const totalTime = phase === "focus" ? customFocus * 60 : current.duration;
+    const totalTime = getPhaseDuration(phase); // Gunakan helper
     const pct = timeLeft / totalTime;
     const fmt = (s: number) =>
         `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -109,19 +121,22 @@ export default function PomodoroPage() {
         if (phase === "focus") {
             const next = sessionsDone + 1;
             setSessionsDone(next);
-            if (next % SESSIONS_UNTIL_LONG === 0) {
-                setPhase("long"); setTimeLeft(PHASES.long.duration);
+            if (next % sessionsUntilLong === 0) {
+                setPhase("long");
+                setTimeLeft(longBreakDuration * 60);
             } else {
-                setPhase("short"); setTimeLeft(PHASES.short.duration);
+                setPhase("short");
+                setTimeLeft(shortBreakDuration * 60); // Menggunakan state baru
             }
         } else {
-            setPhase("focus"); setTimeLeft(customFocus * 60);
+            setPhase("focus");
+            setTimeLeft(customFocus * 60);
         }
-    }, [phase, sessionsDone, stopWorker, ringBell, customFocus]);
+    }, [phase, sessionsDone, stopWorker, ringBell, customFocus, longBreakDuration, shortBreakDuration, sessionsUntilLong]);
 
     const handleReset = () => {
         stopWorker();
-        setTimeLeft(phase === "focus" ? customFocus * 60 : PHASES[phase].duration);
+        setTimeLeft(getPhaseDuration(phase)); // Gunakan helper
     };
 
     const handleResetSession = () => {
@@ -134,7 +149,7 @@ export default function PomodoroPage() {
     const switchPhase = (p: Phase) => {
         stopWorker();
         setPhase(p);
-        setTimeLeft(p === "focus" ? customFocus * 60 : PHASES[p].duration);
+        setTimeLeft(getPhaseDuration(p)); // Gunakan helper
     };
 
     // ── Document title ─────────────────────────────────────────────────────
@@ -197,33 +212,43 @@ export default function PomodoroPage() {
                 isDark={isDark}
                 cardBg={cardBg}
                 customFocus={customFocus}
+                sessionsUntilLong={sessionsUntilLong} // <-- Tambahkan ini
                 sound={sound}
                 accentColor={current.color}
                 onFocusChange={setCustomFocus}
+                onSessionsUntilLongChange={setSessionsUntilLong} // <-- Tambahkan ini
                 onSoundChange={setSound}
+                longBreakDuration={longBreakDuration}
+                onLongBreakDurationChange={setLongBreakDuration}
+                shortBreakDuration={shortBreakDuration} onShortBreakDurationChange={setShortBreakDuration}
             />
 
             <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0 scroll-smooth">
                 <TimerSection
                     isDark={isDark}
-                    cardBg={cardBg}
                     phase={phase}
                     timeLeft={timeLeft}
                     running={running}
                     pct={pct}
                     sessionsDone={sessionsDone}
                     customFocus={customFocus}
+                    sessionsUntilLong={sessionsUntilLong}
                     fmt={fmt}
                     onSwitchPhase={switchPhase}
                     onReset={handleReset}
                     onResetSession={handleResetSession}
                     onPlayPause={running ? stopWorker : startWorker}
                     onSkip={advancePhase}
+
                 />
                 <TaskPanel
                     isDark={isDark}
                     accentColor={current.color}
                     customFocus={customFocus}
+                    sessionsUntilLong={sessionsUntilLong}
+                    longBreakDuration={longBreakDuration}
+                    shortBreakDuration={shortBreakDuration}
+
                 />
             </main>
         </div>

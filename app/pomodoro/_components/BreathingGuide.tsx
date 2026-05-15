@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { BREATHING, BREATHING_CYCLE, type BreathPhase } from "./types";
 import { useLanguage } from "@/components/shared/LanguageContext";
-
-// ─── BreathingGuide ───────────────────────────────────────────────────────────
 
 interface BreathingGuideProps {
     color: string;
@@ -13,59 +12,113 @@ interface BreathingGuideProps {
 
 export default function BreathingGuide({ color }: BreathingGuideProps) {
     const { t } = useLanguage();
-    const [tick, setTick] = useState(0);
+
+    const [seconds, setSeconds] = useState(0);
     const [breathPhase, setBreathPhase] = useState<BreathPhase>("inhale");
-    const [scale, setScale] = useState(0.5);
+    const [remainingPhase, setRemainingPhase] = useState(BREATHING.inhale);
 
     useEffect(() => {
-        const id = setInterval(() => setTick(t => t + 1), 1000);
-        return () => clearInterval(id);
+        const interval = setInterval(() => {
+            setSeconds(prev => {
+                const next = prev + 1;
+                const cycleTime = next % BREATHING_CYCLE;
+
+                let currentPhase: BreathPhase;
+                let timeLeftInPhase: number;
+
+                if (cycleTime < BREATHING.inhale) {
+                    currentPhase = "inhale";
+                    timeLeftInPhase = BREATHING.inhale - cycleTime;
+                } else if (cycleTime < BREATHING.inhale + BREATHING.hold) {
+                    currentPhase = "hold";
+                    timeLeftInPhase = (BREATHING.inhale + BREATHING.hold) - cycleTime;
+                } else {
+                    currentPhase = "exhale";
+                    timeLeftInPhase = BREATHING_CYCLE - cycleTime;
+                }
+
+                setBreathPhase(currentPhase);
+                setRemainingPhase(timeLeftInPhase);
+
+                return next;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        const pos = tick % BREATHING_CYCLE;
-        if (pos < BREATHING.inhale) {
-            setBreathPhase("inhale"); setScale(1);
-        } else if (pos < BREATHING.inhale + BREATHING.hold) {
-            setBreathPhase("hold");
-        } else {
-            setBreathPhase("exhale"); setScale(0.5);
+    const getPhaseDuration = (p: BreathPhase) => BREATHING[p];
+    const elapsedInPhase = getPhaseDuration(breathPhase) - remainingPhase;
+    const pct = elapsedInPhase / getPhaseDuration(breathPhase);
+
+    const strokeDasharray = 2 * Math.PI * 90;
+    const strokeDashoffset = strokeDasharray * (1 - pct);
+
+    const getPhaseLabel = (p: BreathPhase) => {
+        if (p === "inhale") return t('inhale');
+        if (p === "hold") return t('hold');
+        if (p === "exhale") return t('exhale');
+        return "";
+    };
+
+    const petPulse = {
+        animate: {
+            scale: breathPhase === "inhale" ? 1.1 : breathPhase === "exhale" ? 0.9 : 1.0,
+            transition: {
+                duration: getPhaseDuration(breathPhase),
+                ease: "linear"
+            }
         }
-    }, [tick]);
-
-    const dur = breathPhase === "inhale" ? BREATHING.inhale
-        : breathPhase === "hold" ? BREATHING.hold
-            : BREATHING.exhale;
-
-    const label = breathPhase === "inhale" ? t('breatheIn') : breathPhase === "hold" ? t('hold') : t('breatheOut');
+    };
 
     return (
-        <motion.div className="flex flex-col items-center gap-6 py-4 select-none"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <p className="text-xs uppercase tracking-[0.3em] opacity-40 font-bold">{t('shortBreakBreathe')}</p>
-            <div className="relative flex items-center justify-center" style={{ width: 200, height: 200 }}>
-                <motion.div className="absolute rounded-full opacity-20"
-                    style={{ backgroundColor: color, width: 200, height: 200 }}
-                    animate={{ scale: [0.9, 1.1, 0.9] }}
-                    transition={{ duration: BREATHING_CYCLE, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <motion.div className="rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: color + "33", border: `2px solid ${color}66`, width: 120, height: 120 }}
-                    animate={{ scale }}
-                    transition={{ duration: dur, ease: breathPhase === "exhale" ? "easeIn" : "easeOut" }}>
-                    <motion.div className="rounded-full" style={{ backgroundColor: color, width: 24, height: 24 }}
-                        animate={{ scale: breathPhase === "hold" ? [1, 1.1, 1] : 1 }}
-                        transition={{ duration: 1, repeat: breathPhase === "hold" ? Infinity : 0 }}
-                    />
-                </motion.div>
+        // Root div dilepas dimensi internalnya, parent TimerSection yang mengaturnya.
+        <div className="relative w-full h-full flex items-center justify-center select-none">
+
+            <div className="absolute inset-2 sm:inset-3 rounded-full border-[6px] sm:border-[8px] border-black/10 dark:border-white/10 shadow-inner" />
+
+            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
+                <motion.circle cx="100" cy="100" r="90" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
+                    style={{ strokeDasharray, strokeDashoffset }}
+                    transition={{ duration: 1, ease: "linear" }} />
+            </svg>
+
+            <div className="flex flex-col items-center justify-center z-10 mt-1">
+
+                {/* Wrapper Div khusus untuk Angka agar posisinya stabil */}
+                <div className="relative flex justify-center items-center h-[1.2em]">
+                    {/* HAPUS mode="wait" DI SINI agar layout stabil */}
+                    <AnimatePresence>
+                        <motion.div
+                            key={remainingPhase}
+                            initial={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            // Saat exit dibuat absolute agar tidak mendorong layout, dan angka baru langsung mengambil tempatnya
+                            exit={{ opacity: 0, scale: 1.5, position: "absolute" }}
+                            transition={{ duration: 0.3 }}
+                            className="font-black geo-nums tabular-nums leading-none tracking-tighter"
+                            style={{ fontSize: "clamp(2.5rem, 6vh, 4rem)", color: color }}
+                        >
+                            {remainingPhase}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+
+                {/* Wrapper Div khusus untuk Label Fase agar teks bawahnya tidak naik turun */}
+                <div className="relative flex justify-center items-center h-[20px] mt-8">
+                    <AnimatePresence mode="wait">
+                        <motion.span
+                            key={breathPhase}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5, position: "absolute" }}
+                            className="font-bold uppercase tracking-[0.2em] opacity-60 text-[9px] sm:text-[10px] bg-black/5 dark:bg-white/10 px-3 py-1 rounded-full text-center"
+                        >
+                            {getPhaseLabel(breathPhase)}
+                        </motion.span>
+                    </AnimatePresence>
+                </div>
             </div>
-            <p className="text-lg font-semibold opacity-70">{label}</p>
-            <p className="text-xs opacity-30">
-                {String(t('breathePattern'))
-                    .replace('{0}', BREATHING.inhale.toString())
-                    .replace('{1}', BREATHING.hold.toString())
-                    .replace('{2}', BREATHING.exhale.toString())}
-            </p>
-        </motion.div>
+        </div>
     );
 }

@@ -17,6 +17,14 @@ export const translations = {
     distortion: "Distortion",
     css: "Pure CSS",
     none: "None",
+    sessionsUntilLong: "Long Break Interval",
+    sessionsUntilLongDesc: "Sessions before long break",
+    longBreakDuration: "Long Break Duration",
+    longBreakDurationDesc: "Duration for long break",
+    inhale: "inhale",
+    exhale: "exhale",
+    shortBreakDuration: "Short Break Duration",
+    shortBreakDurationDesc: "Duration for short break",
 
     // Dates
     days: [
@@ -139,6 +147,14 @@ export const translations = {
     distortion: "Distorsi",
     css: "CSS Murni",
     none: "Tidak ada",
+    sessionsUntilLong: "Interval Istirahat Panjang",
+    sessionsUntilLongDesc: "Sesi sebelum istirahat panjang",
+    longBreakDuration: "Durasi Istirahat Panjang",
+    longBreakDurationDesc: "Durasi untuk istirahat panjang",
+    inhale: "tarik napas",
+    exhale: "hembuskan napas",
+    shortBreakDuration: "Durasi Istirahat Pendek",
+    shortBreakDurationDesc: "Durasi untuk istirahat pendek",
 
     // Dates
     days: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"],

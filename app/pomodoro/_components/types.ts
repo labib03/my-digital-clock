@@ -9,16 +9,20 @@ export interface Task {
   done: boolean;
 }
 
-export const PHASES: Record<
-  Phase,
-  { label: string; duration: number; color: string }
-> = {
-  focus: { label: "Focus", duration: 25 * 60, color: "#3B82F6" },
-  short: { label: "Short Break", duration: 5 * 60, color: "#10B981" },
-  long: { label: "Long Break", duration: 15 * 60, color: "#F97316" },
+// PHASES sekarang hanya digunakan untuk referensi UI (warna tema).
+export const PHASES: Record<Phase, { color: string }> = {
+  focus: { color: "#3B82F6" },
+  short: { color: "#10B981" },
+  long: { color: "#F97316" },
 };
 
-export const SESSIONS_UNTIL_LONG = 4;
+// Konstanta default untuk inisialisasi awal di page.tsx
+export const DEFAULT_SETTINGS = {
+  focusDuration: 25,
+  shortBreakDuration: 5,
+  longBreakDuration: 15,
+  sessionsUntilLong: 4,
+};
 
 export const BREATHING = { inhale: 4, hold: 7, exhale: 8 };
 export const BREATHING_CYCLE =
