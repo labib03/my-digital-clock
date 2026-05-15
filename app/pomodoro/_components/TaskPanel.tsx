@@ -16,10 +16,17 @@ interface TaskPanelProps {
 export default function TaskPanel({ isDark, accentColor, customFocus }: TaskPanelProps) {
     const { t } = useLanguage();
     return (
-        <section className="w-full lg:w-[40vw] xl:w-[35vw] flex-shrink-0 flex flex-col overflow-y-auto px-6 sm:px-10 lg:px-8 pt-8 pb-8 gap-4">
+        <section className="w-full lg:w-[40vw] xl:w-[35vw] flex-shrink-0 flex flex-col lg:overflow-y-auto px-6 sm:px-10 lg:px-8 pt-4 lg:pt-8 pb-32 lg:pb-8 gap-4">
+
+            {/* Visual Separator untuk Mobile (Opsional, agar transisi lebih cantik) */}
+            <div className="w-full flex justify-center mb-2 lg:hidden">
+                <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-white/10' : 'bg-black/10'}`} />
+            </div>
+
             <LofiPlayer isDark={isDark} accentColor={accentColor} />
             <TaskList isDark={isDark} accentColor={accentColor} />
-            <p className="text-[10px] opacity-40 text-center leading-relaxed">
+
+            <p className="text-[10px] opacity-40 text-center leading-relaxed mt-4">
                 {customFocus}m {t('focus')} · 5m {t('shortBreak')} · 15m {t('longBreak')} every {SESSIONS_UNTIL_LONG} sessions
             </p>
         </section>

@@ -1,13 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import { Play, Pause, RotateCcw, SkipForward, RefreshCw } from "lucide-react";
+
 import { PHASES, SESSIONS_UNTIL_LONG, type Phase } from "./types";
 import ProgressRing from "./ProgressRing";
 import SessionDots from "./SessionDots";
 import BreathingGuide from "./BreathingGuide";
+import MiniTimerPlayer from "./MiniTimerPlayer";
 import { useLanguage } from "@/components/shared/LanguageContext";
-
-// ─── TimerSection ─────────────────────────────────────────────────────────────
 
 interface TimerSectionProps {
     isDark: boolean;
@@ -34,6 +36,11 @@ export default function TimerSection({
     const { t } = useLanguage();
     const current = PHASES[phase];
 
+    const { ref: timerRef, inView: timerInView } = useInView({
+        threshold: 0.1,
+        initialInView: true,
+    });
+
     const getPhaseLabel = (p: Phase) => {
         if (p === "focus") return t('focus');
         if (p === "short") return t('shortBreak');
@@ -42,124 +49,147 @@ export default function TimerSection({
     };
 
     return (
-        <section
-            className="flex-1 flex flex-col items-center justify-center gap-[3vh] overflow-y-auto lg:overflow-hidden py-8 lg:py-0 border-b lg:border-b-0 lg:border-r"
-            style={{ borderColor: isDark ? "#2A2A2A" : "#E5E7EB" }}>
+        <>
+            <section
+                className="relative lg:flex-1 flex flex-col items-center py-12 lg:py-0 gap-[4vh] lg:overflow-hidden lg:border-r shrink-0 scroll-smooth"
+                style={{ borderColor: isDark ? "#2A2A2A" : "#E5E7EB" }}
+            >
+                <div className="flex-1 flex flex-col items-center justify-center gap-[4vh] w-full max-w-md mx-auto px-6">
 
-            {/* Phase Switcher */}
-            <div className={`flex gap-1 rounded-full p-1 border ${cardBg}`}>
-                {(Object.entries(PHASES) as [Phase, typeof PHASES[Phase]][]).map(([key, val]) => (
-                    <button key={key} id={`phase-${key}`} onClick={() => onSwitchPhase(key)}
-                        className={`px-3 sm:px-4 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all duration-300 cursor-pointer ${phase === key ? "text-white shadow-lg" : "opacity-40 hover:opacity-70"}`}
-                        style={phase === key ? { backgroundColor: val.color } : {}}>
-                        {getPhaseLabel(key)}
-                    </button>
-                ))}
-            </div>
+                    {/* Modern Phase Switcher */}
+                    <div className={`relative flex p-1.5 rounded-full ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                        {(Object.entries(PHASES) as [Phase, typeof PHASES[Phase]][]).map(([key, val]) => {
+                            const isActive = phase === key;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => onSwitchPhase(key)}
+                                    className="relative px-4 sm:px-6 py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-colors z-10"
+                                    style={{ color: isActive ? (isDark ? '#000' : '#fff') : 'inherit' }}
+                                >
+                                    {isActive && (
+                                        <motion.div
+                                            layoutId="activePhaseBackground"
+                                            className="absolute inset-0 rounded-full shadow-md z-[-1]"
+                                            style={{ backgroundColor: val.color }}
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        />
+                                    )}
+                                    <span className={isActive ? "opacity-100" : "opacity-50 hover:opacity-80"}>
+                                        {getPhaseLabel(key)}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
 
-            {/* Timer Ring or Breathing Guide */}
-            <AnimatePresence mode="wait">
-                {(phase === "short" || phase === "long") && running ? (
-                    <motion.div key="breathing"
-                        initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
-                        <BreathingGuide color={current.color} />
-                    </motion.div>
-                ) : (
-                    <motion.div key="timer"
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="relative flex items-center justify-center select-none"
-                        style={{ width: "min(42vh, 320px)", height: "min(42vh, 320px)" }}>
-                        <ProgressRing pct={pct} color={current.color} />
-                        <div className="flex flex-col items-center gap-1 z-10">
-                            <motion.span key={phase}
-                                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                                className="font-bold uppercase tracking-[0.3em] opacity-40"
-                                style={{ fontSize: "clamp(9px, 1.2vh, 13px)" }}>
-                                {getPhaseLabel(phase)}
-                            </motion.span>
-                            <div className="font-semibold geo-nums tabular-nums leading-none"
-                                style={{ fontSize: "clamp(3.5rem, 9vh, 7rem)", color: running ? current.color : undefined }}>
-                                {fmt(timeLeft)}
-                            </div>
-                            <span className="opacity-30 mt-1" style={{ fontSize: "clamp(9px, 1.2vh, 13px)" }}>
-                                {t('sessionsDone')}: {(sessionsDone % SESSIONS_UNTIL_LONG) + 1} / {SESSIONS_UNTIL_LONG}
-                            </span>
+                    {/* Timer / Breathing Guide Area */}
+                    <div ref={timerRef} className="flex justify-center w-full">
+                        <AnimatePresence mode="wait">
+                            {(phase === "short" || phase === "long") && running ? (
+                                <motion.div key="breathing"
+                                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                                    <BreathingGuide color={current.color} />
+                                </motion.div>
+                            ) : (
+                                <motion.div key="timer"
+                                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                                    className="relative flex items-center justify-center select-none"
+                                    style={{ width: "min(40vh, 300px)", height: "min(40vh, 300px)" }}>
+
+                                    <ProgressRing pct={pct} color={current.color} />
+
+                                    <div className="flex flex-col items-center gap-2 z-10">
+                                        <motion.span key={phase}
+                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                                            className="font-bold uppercase tracking-[0.3em] opacity-40 text-[10px] sm:text-xs">
+                                            {getPhaseLabel(phase)}
+                                        </motion.span>
+
+                                        <div className="font-semibold geo-nums tabular-nums leading-none tracking-tight"
+                                            style={{ fontSize: "clamp(4rem, 10vh, 7.5rem)", color: running ? current.color : undefined }}>
+                                            {fmt(timeLeft)}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <SessionDots completed={sessionsDone % SESSIONS_UNTIL_LONG} color={current.color} />
+
+                    {/* Modern Controls */}
+                    <div className="flex items-center gap-6 mt-2">
+                        <button onClick={onReset}
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${isDark ? 'bg-white/5 text-white/50 hover:text-white' : 'bg-black/5 text-black/40 hover:text-black'}`}
+                            aria-label={t('reset')}>
+                            <RotateCcw size={20} strokeWidth={2.5} />
+                        </button>
+
+                        <motion.button
+                            onClick={onPlayPause}
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-[2rem] text-white flex items-center justify-center shadow-xl transition-shadow hover:shadow-2xl active:scale-95"
+                            style={{ backgroundColor: current.color }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <AnimatePresence mode="wait">
+                                {running
+                                    ? <motion.div key="pause" initial={{ opacity: 0, rotate: -90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 90 }}>
+                                        <Pause size={36} fill="currentColor" />
+                                    </motion.div>
+                                    : <motion.div key="play" initial={{ opacity: 0, rotate: 90 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: -90 }}>
+                                        <Play size={36} fill="currentColor" className="ml-2" />
+                                    </motion.div>
+                                }
+                            </AnimatePresence>
+                        </motion.button>
+
+                        <button onClick={onSkip}
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${isDark ? 'bg-white/5 text-white/50 hover:text-white' : 'bg-black/5 text-black/40 hover:text-black'}`}
+                            aria-label={t('skip')}>
+                            <SkipForward size={20} strokeWidth={2.5} />
+                        </button>
+                    </div>
+
+                    {/* Stats Panel */}
+                    <div className={`w-full grid grid-cols-3 gap-4 rounded-3xl p-6 mt-4 ${isDark ? 'bg-[#1A1A1A]/50' : 'bg-[#F9FAFB]'}`}>
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-2xl font-bold geo-nums" style={{ color: PHASES.focus.color }}>{sessionsDone}</span>
+                            <span className="text-[9px] sm:text-[10px] uppercase tracking-widest opacity-40 text-center">{t('sessions')}</span>
                         </div>
-                    </motion.div>
+                        <div className="flex flex-col items-center gap-1 border-x" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                            <span className="text-2xl font-bold geo-nums" style={{ color: PHASES.focus.color }}>{sessionsDone * customFocus}</span>
+                            <span className="text-[9px] sm:text-[10px] uppercase tracking-widest opacity-40 text-center">{t('minFocused')}</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-2xl font-bold geo-nums" style={{ color: PHASES.long.color }}>{Math.floor(sessionsDone / SESSIONS_UNTIL_LONG)}</span>
+                            <span className="text-[9px] sm:text-[10px] uppercase tracking-widest opacity-40 text-center">{t('longBreaks')}</span>
+                        </div>
+                    </div>
+
+                    <button onClick={onResetSession}
+                        className="text-xs opacity-30 hover:opacity-80 transition-all flex items-center gap-2 mt-2 mb-10 lg:mb-0">
+                        <RefreshCw size={14} />
+                        {t('resetAllSessions')}
+                    </button>
+                </div>
+            </section>
+
+            {/* Sticky Mini Player */}
+            <AnimatePresence>
+                {!timerInView && (
+                    <MiniTimerPlayer
+                        phase={phase}
+                        timeLeft={timeLeft}
+                        running={running}
+                        isDark={isDark}
+                        fmt={fmt}
+                        onPlayPause={onPlayPause}
+                        onSkip={onSkip}
+                    />
                 )}
             </AnimatePresence>
-
-            {/* Session Dots */}
-            <SessionDots completed={sessionsDone % SESSIONS_UNTIL_LONG} color={current.color} />
-
-            {/* Controls */}
-            <div className="flex items-center gap-4">
-                <button id="btn-reset" onClick={onReset}
-                    className={`w-12 h-12 rounded-full border ${cardBg} cursor-pointer flex items-center justify-center opacity-60 hover:opacity-100 transition-all active:scale-95`}
-                    aria-label={t('reset')}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" />
-                    </svg>
-                </button>
-
-                <motion.button id="btn-play-pause"
-                    onClick={onPlayPause}
-                    className="w-20 h-20 rounded-full text-white cursor-pointer flex items-center justify-center shadow-2xl transition-all active:scale-95"
-                    style={{ backgroundColor: current.color }}
-                    whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
-                    aria-label={running ? t('pause') : t('start')}>
-                    <AnimatePresence mode="wait">
-                        {running
-                            ? <motion.div key="pause" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
-                                </svg>
-                            </motion.div>
-                            : <motion.div key="play" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-                                    <polygon points="5 3 19 12 5 21 5 3" />
-                                </svg>
-                            </motion.div>
-                        }
-                    </AnimatePresence>
-                </motion.button>
-
-                <button id="btn-skip" onClick={onSkip}
-                    className={`w-12 h-12 rounded-full border ${cardBg} cursor-pointer flex items-center justify-center opacity-60 hover:opacity-100 transition-all active:scale-95`}
-                    aria-label={t('skip')}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 4 15 12 5 20 5 4" /><line x1="19" y1="5" x2="19" y2="19" />
-                    </svg>
-                </button>
-            </div>
-
-            {/* Stats */}
-            <div className={`flex gap-5 sm:gap-8 rounded-2xl border ${cardBg} px-6 py-4 text-center`}>
-                <div className="flex flex-col gap-0.5">
-                    <span className="text-2xl font-bold geo-nums" style={{ color: PHASES.focus.color }}>{sessionsDone}</span>
-                    <span className="text-[10px] uppercase tracking-widest opacity-40">{t('sessions')}</span>
-                </div>
-                <div className={`w-px self-stretch ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
-                <div className="flex flex-col gap-0.5">
-                    <span className="text-2xl font-bold geo-nums" style={{ color: PHASES.focus.color }}>{sessionsDone * customFocus}</span>
-                    <span className="text-[10px] uppercase tracking-widest opacity-40">{t('minFocused')}</span>
-                </div>
-                <div className={`w-px self-stretch ${isDark ? "bg-white/10" : "bg-slate-200"}`} />
-                <div className="flex flex-col gap-0.5">
-                    <span className="text-2xl font-bold geo-nums" style={{ color: PHASES.long.color }}>{Math.floor(sessionsDone / SESSIONS_UNTIL_LONG)}</span>
-                    <span className="text-[10px] uppercase tracking-widest opacity-40">{t('longBreaks')}</span>
-                </div>
-            </div>
-
-            {/* Reset Sessions */}
-            <button id="btn-reset-session" onClick={onResetSession}
-                className="text-xs opacity-25 hover:opacity-60 cursor-pointer transition-all flex items-center gap-1.5"
-                aria-label={t('reset')}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" />
-                </svg>
-                {t('resetAllSessions')}
-            </button>
-        </section>
+        </>
     );
 }

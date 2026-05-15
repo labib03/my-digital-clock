@@ -19,7 +19,7 @@ export default function ThemeDecoration({ isDark }: { isDark: boolean }) {
             <img
                 src="/assets/totoro-decoration.png"
                 alt="Totoro Decoration"
-                className={`w-full h-auto transition-opacity duration-1000`}
+                className={`w-full h-auto transition-opacity duration-1000 hidden lg:block`}
             />
         </motion.div>
     );

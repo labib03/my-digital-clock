@@ -203,7 +203,7 @@ export default function PomodoroPage() {
                 onSoundChange={setSound}
             />
 
-            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+            <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0 scroll-smooth">
                 <TimerSection
                     isDark={isDark}
                     cardBg={cardBg}
