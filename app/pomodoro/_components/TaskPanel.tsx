@@ -50,7 +50,7 @@ export default function TaskPanel({
 
                 </div>
 
-                <p className="text-[9px] sm:text-[10px] font-bold opacity-40 text-center leading-relaxed mt-4 uppercase tracking-wider">
+                <p className="text-[9px] sm:text-[10px] font-bold opacity-40 text-center leading-relaxed mt-4 pb-5 uppercase tracking-wider">
                     {customFocus}m {t('focus')} • {shortBreakDuration}m {t('shortBreak')} • {longBreakDuration}m {t('longBreak')} (Every {sessionsUntilLong} Lvls)
                 </p>
             </div>

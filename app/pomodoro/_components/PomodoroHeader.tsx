@@ -43,9 +43,10 @@ export default function PomodoroHeader({
 
     return (
         <header
-            className="flex-shrink-0 z-20 flex items-center justify-between px-6 sm:px-10 py-4 backdrop-blur-sm bg-[#F8FAFC]"
+            className="flex-shrink-0 z-20 flex items-center justify-between px-6 sm:px-10 py-4 backdrop-blur-sm"
             style={{
-                borderColor: isDark ? "#2A2A2A" : "#E5E7EB"
+                borderColor: isDark ? "#2A2A2A" : "#E5E7EB",
+                backgroundColor: isDark ? "#1A1A20" : "#F8FAFC"
             }}>
 
             <Link href="/" className="flex items-center gap-2 text-sm font-semibold opacity-60 hover:opacity-100 transition-opacity cursor-pointer">

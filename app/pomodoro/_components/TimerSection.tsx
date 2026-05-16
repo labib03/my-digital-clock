@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { Play, Pause, RotateCcw, SkipForward, RefreshCw, Star, Shield, Zap } from "lucide-react";
@@ -20,7 +19,7 @@ interface TimerSectionProps {
     pct: number;
     sessionsDone: number;
     customFocus: number;
-    sessionsUntilLong: number; // Prop baru ditambahkan
+    sessionsUntilLong: number;
     fmt: (s: number) => string;
     onSwitchPhase: (p: Phase) => void;
     onReset: () => void;
@@ -57,34 +56,24 @@ export default function TimerSection({
         ? "bg-[#2A2A35] border-2 sm:border-[3px] border-[#0F0F13] text-white shadow-[0_3px_0_#0F0F13] sm:shadow-[0_4px_0_#0F0F13] hover:brightness-110"
         : "bg-white border-2 sm:border-[3px] border-[#CBD5E1] text-slate-700 shadow-[0_3px_0_#94A3B8] sm:shadow-[0_4px_0_#94A3B8] hover:brightness-95";
 
-    const petAnimation = {
-        animate: {
-            y: running && phase === "focus" ? [0, -6, 0] : [0, -2, 0],
-            scale: phase === "focus" ? 1 : 0.95,
-            opacity: phase === "focus" ? 1 : 0.7,
-            transition: {
-                duration: running && phase === "focus" ? 1 : 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-            }
-        }
-    };
-
     return (
         <>
-            <section className="relative lg:flex-1 flex flex-col items-center py-6 sm:py-12 lg:py-0 gap-4 sm:gap-[4vh] lg:overflow-hidden shrink-0 scroll-smooth z-10 w-full">
-                <div className="flex-1 flex flex-col items-center justify-center gap-5 sm:gap-[4vh] w-full max-w-md mx-auto px-4 sm:px-6">
+            <section className="relative lg:flex-1 flex flex-col items-center py-[clamp(1rem,3vmin,2.5rem)] lg:overflow-hidden shrink-0 scroll-smooth z-10 w-full">
+                <div className="flex-1 flex flex-col items-center justify-center gap-[clamp(0.75rem,3.5vmin,2rem)] w-full max-w-md mx-auto px-4">
 
-                    <div className={`relative flex p-1.5 sm:p-2 rounded-2xl ${gamePanel}`}>
-                        {/* ... tabs ... */}
+                    {/* 1. DYNAMIC TABS BLOCK */}
+                    <div className={`relative flex p-[clamp(4px,1vmin,8px)] rounded-2xl ${gamePanel}`}>
                         {(Object.entries(PHASES) as [Phase, typeof PHASES[Phase]][]).map(([key, val]) => {
                             const isActive = phase === key;
                             return (
                                 <button
                                     key={key}
                                     onClick={() => onSwitchPhase(key)}
-                                    className="relative px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest z-10 transition-colors"
-                                    style={{ color: isActive ? '#fff' : (isDark ? '#888' : '#666') }}
+                                    className="relative px-[clamp(0.75rem,2.5vmin,1.5rem)] py-[clamp(0.35rem,1.5vmin,0.65rem)] rounded-xl font-bold uppercase tracking-widest z-10 transition-colors"
+                                    style={{
+                                        color: isActive ? '#fff' : (isDark ? '#888' : '#666'),
+                                        fontSize: "clamp(9px, 1.5vmin, 12px)"
+                                    }}
                                 >
                                     {isActive && (
                                         <motion.div
@@ -100,33 +89,40 @@ export default function TimerSection({
                         })}
                     </div>
 
-                    {/* Timer Arena (Container utama) */}
+                    {/* 2. DYNAMIC TIMER ARENA */}
                     <div ref={timerRef} className="flex justify-center w-full relative">
                         <AnimatePresence mode="wait">
                             {(phase === "short" || phase === "long") && running ? (
                                 <motion.div key="breathing"
-                                    initial={{ opacity: 0, scale: 0.8, rotate: -10 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} exit={{ opacity: 0, scale: 0.8 }}
-                                    // SINKRONISASI DIMENSI DI SINI: Samakan class dan style dengan container timer
+                                    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
                                     className="relative flex items-center justify-center select-none"
-                                    style={{ width: "min(34vh, 260px)", height: "min(34vh, 260px)" }}>
+                                    style={{
+                                        width: "clamp(190px, 36vmin, 270px)",
+                                        height: "clamp(190px, 36vmin, 270px)"
+                                    }}>
                                     <BreathingGuide color={current.color} />
                                 </motion.div>
                             ) : (
                                 <motion.div key="timer"
                                     initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
                                     className="relative flex items-center justify-center select-none"
-                                    // DIMENSI INI HARUS SAMA DENGAN DI ATAS
-                                    style={{ width: "min(34vh, 260px)", height: "min(34vh, 260px)" }}>
+                                    style={{
+                                        width: "clamp(190px, 36vmin, 270px)",
+                                        height: "clamp(190px, 36vmin, 270px)"
+                                    }}>
 
-                                    <div className={`absolute inset-3 sm:inset-4 rounded-full border-[6px] sm:border-[8px] ${isDark ? 'border-[#1E1E24]' : 'border-[#F1F5F9]'} shadow-inner`} />
+                                    <div className={`absolute inset-[clamp(10px,2vmin,16px)] rounded-full border-[clamp(4px,1vmin,8px)] ${isDark ? 'border-[#1E1E24]' : 'border-[#F1F5F9]'} shadow-inner`} />
                                     <ProgressRing pct={pct} color={current.color} />
 
                                     <div className="flex flex-col items-center z-10">
                                         <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter drop-shadow-md"
-                                            style={{ fontSize: "clamp(3rem, 7vh, 5rem)", color: running ? current.color : (isDark ? '#fff' : '#333') }}>
+                                            style={{
+                                                fontSize: "clamp(2.75rem, 8.5vmin, 4.5rem)",
+                                                color: running ? current.color : (isDark ? '#fff' : '#333')
+                                            }}>
                                             {fmt(timeLeft)}
                                         </div>
-                                        <motion.span key={phase} className="font-bold uppercase tracking-[0.2em] opacity-50 text-[9px] sm:text-[10px] mt-1 sm:mt-2 bg-black/5 dark:bg-white/10 px-3 py-1 rounded-full">
+                                        <motion.span key={phase} className="font-bold uppercase tracking-[0.2em] opacity-50 text-[clamp(8px,1.2vmin,10px)] mt-1.5 bg-black/5 dark:bg-white/10 px-2.5 py-0.5 rounded-full">
                                             Level {(sessionsDone % sessionsUntilLong) + 1}
                                         </motion.span>
                                     </div>
@@ -135,68 +131,100 @@ export default function TimerSection({
                         </AnimatePresence>
                     </div>
 
-                    {/* Menggunakan nilai dinamis untuk prop total */}
-                    <SessionDots completed={sessionsDone % sessionsUntilLong} total={sessionsUntilLong} color={current.color} />
+                    {/* DYNAMIC SESSION DOTS CONTAINER */}
+                    <div className="h-[12px] flex items-center justify-center">
+                        <SessionDots completed={sessionsDone % sessionsUntilLong} total={sessionsUntilLong} color={current.color} />
+                    </div>
 
-                    <div className="flex items-center gap-4 sm:gap-5 mt-1 sm:mt-2">
-                        {/* ... controls ... */}
+                    {/* 3. DYNAMIC CONTROLS */}
+                    <div className="flex items-center gap-[clamp(0.75rem,3vmin,1.5rem)] mt-0.5">
                         <motion.button onClick={onReset}
-                            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-colors ${gameButton}`}
-                            whileTap={{ y: 4, boxShadow: "0 0px 0 rgba(0,0,0,0)" }}
+                            className={`rounded-2xl flex items-center justify-center transition-colors ${gameButton}`}
+                            style={{
+                                width: "clamp(2.75rem, 7.5vmin, 3.5rem)",
+                                height: "clamp(2.75rem, 7.5vmin, 3.5rem)"
+                            }}
+                            whileTap={{ y: 3, boxShadow: "0 0px 0 rgba(0,0,0,0)" }}
                             aria-label={t('reset')}>
-                            <RotateCcw size={20} strokeWidth={3} className="sm:w-[22px] sm:h-[22px]" />
+                            <RotateCcw strokeWidth={3} style={{ width: "clamp(16px, 3.5vmin, 22px)", height: "clamp(16px, 3.5vmin, 22px)" }} />
                         </motion.button>
 
                         <motion.button
                             onClick={onPlayPause}
-                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] sm:rounded-[2rem] text-white flex items-center justify-center border-b-[4px] sm:border-b-[6px] border-black/20"
-                            style={{ backgroundColor: current.color, boxShadow: `0 6px 0 ${current.color}80` }}
-                            whileTap={{ y: 6, boxShadow: `0 0px 0 ${current.color}80`, borderBottomWidth: "0px", marginTop: "4px" }}
+                            className="rounded-[clamp(1.25rem,3.5vmin,1.75rem)] text-white flex items-center justify-center border-b-[4px] sm:border-b-[5px] border-black/20"
+                            style={{
+                                backgroundColor: current.color,
+                                boxShadow: `0 5px 0 ${current.color}80`,
+                                width: "clamp(4.25rem, 11.5vmin, 5.5rem)",
+                                height: "clamp(4.25rem, 11.5vmin, 5.5rem)"
+                            }}
+                            whileTap={{ y: 5, boxShadow: `0 0px 0 ${current.color}80`, borderBottomWidth: "0px", marginTop: "4px" }}
                         >
                             <AnimatePresence mode="wait">
                                 {running
                                     ? <motion.div key="pause" initial={{ scale: 0.5 }} animate={{ scale: 1 }} exit={{ scale: 0.5 }}>
-                                        <Pause size={36} fill="currentColor" className="sm:w-[44px] sm:h-[44px]" />
+                                        <Pause fill="currentColor" style={{ width: "clamp(26px, 6.5vmin, 40px)", height: "clamp(26px, 6.5vmin, 40px)" }} />
                                     </motion.div>
                                     : <motion.div key="play" initial={{ scale: 0.5 }} animate={{ scale: 1 }} exit={{ scale: 0.5 }}>
-                                        <Play size={36} fill="currentColor" className="ml-1.5 sm:ml-2 sm:w-[44px] sm:h-[44px]" />
+                                        <Play fill="currentColor" className="ml-1" style={{ width: "clamp(26px, 6.5vmin, 40px)", height: "clamp(26px, 6.5vmin, 40px)" }} />
                                     </motion.div>
                                 }
                             </AnimatePresence>
                         </motion.button>
 
                         <motion.button onClick={onSkip}
-                            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-colors ${gameButton}`}
-                            whileTap={{ y: 4, boxShadow: "0 0px 0 rgba(0,0,0,0)" }}
+                            className={`rounded-2xl flex items-center justify-center transition-colors ${gameButton}`}
+                            style={{
+                                width: "clamp(2.75rem, 7.5vmin, 3.5rem)",
+                                height: "clamp(2.75rem, 7.5vmin, 3.5rem)"
+                            }}
+                            whileTap={{ y: 3, boxShadow: "0 0px 0 rgba(0,0,0,0)" }}
                             aria-label={t('skip')}>
-                            <SkipForward size={20} strokeWidth={3} className="sm:w-[22px] sm:h-[22px]" />
+                            <SkipForward strokeWidth={3} style={{ width: "clamp(16px, 3.5vmin, 22px)", height: "clamp(16px, 3.5vmin, 22px)" }} />
                         </motion.button>
                     </div>
 
+                    {/* 4. DYNAMIC STATS PANEL & RESET BUTTON (MERGED) */}
+                    <div className="relative w-full mt-0.5">
 
-                    <div className={`w-full grid grid-cols-3 gap-2 sm:gap-3 rounded-2xl sm:rounded-3xl p-4 sm:p-5 mt-2 ${gamePanel}`}>
-                        {/* ... stats ... */}
-                        <div className="flex flex-col items-center justify-center gap-1">
-                            <Star size={14} className="text-yellow-400 mb-0.5 drop-shadow-sm" fill="currentColor" />
-                            <span className="text-xl sm:text-2xl font-black geo-nums leading-none">{sessionsDone}</span>
-                            <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest opacity-50">Streaks</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center gap-1 border-x-2 border-dashed" style={{ borderColor: isDark ? '#2A2A35' : '#E2E8F0' }}>
-                            <Zap size={14} className="text-blue-400 mb-0.5 drop-shadow-sm" fill="currentColor" />
-                            <span className="text-xl sm:text-2xl font-black geo-nums leading-none">{sessionsDone * customFocus}</span>
-                            <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest opacity-50">EXP (Min)</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center gap-1">
-                            <Shield size={14} className="text-green-400 mb-0.5 drop-shadow-sm" fill="currentColor" />
-                            <span className="text-xl sm:text-2xl font-black geo-nums leading-none">{Math.floor(sessionsDone / sessionsUntilLong)}</span>
-                            <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest opacity-50">Rewards</span>
+                        {/* Tombol Reset All Sessions - Melayang di kanan atas */}
+                        <button
+                            onClick={onResetSession}
+                            title={t('resetAllSessions')}
+                            aria-label={t('resetAllSessions')}
+                            className={`absolute -top-2 -right-2 sm:-top-3 sm:-right-3 z-20 
+                                flex items-center justify-center rounded-full transition-all duration-300
+                                opacity-60 hover:opacity-100 hover:scale-110 active:scale-95
+                                ${isDark
+                                    ? 'bg-[#2A2A35] text-white/70 hover:text-red-400 border border-[#1E1E24]'
+                                    : 'bg-white text-slate-500 hover:text-red-500 border border-slate-200 shadow-sm'}`}
+                            style={{
+                                width: "clamp(24px, 4.5vmin, 32px)",
+                                height: "clamp(24px, 4.5vmin, 32px)"
+                            }}
+                        >
+                            <RefreshCw strokeWidth={2.5} style={{ width: "clamp(12px, 2vmin, 16px)", height: "clamp(12px, 2vmin, 16px)" }} />
+                        </button>
+
+                        <div className={`w-full grid grid-cols-3 gap-[clamp(4px,1.5vmin,12px)] rounded-2xl p-[clamp(0.5rem,2.5vmin,1rem)] ${gamePanel}`}>
+                            <div className="flex flex-col items-center justify-center gap-0.5">
+                                <Star className="text-yellow-400 drop-shadow-sm mb-0.5" fill="currentColor" style={{ width: "clamp(11px, 2vmin, 15px)", height: "clamp(11px, 2vmin, 15px)" }} />
+                                <span className="font-black geo-nums leading-none" style={{ fontSize: "clamp(1.1rem, 4vmin, 1.5rem)" }}>{sessionsDone}</span>
+                                <span className="font-bold uppercase tracking-widest opacity-50" style={{ fontSize: "clamp(7px, 1.2vmin, 9px)" }}>Streaks</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center gap-0.5 border-x-2 border-dashed" style={{ borderColor: isDark ? '#2A2A35' : '#E2E8F0' }}>
+                                <Zap className="text-blue-400 drop-shadow-sm mb-0.5" fill="currentColor" style={{ width: "clamp(11px, 2vmin, 15px)", height: "clamp(11px, 2vmin, 15px)" }} />
+                                <span className="font-black geo-nums leading-none" style={{ fontSize: "clamp(1.1rem, 4vmin, 1.5rem)" }}>{sessionsDone * customFocus}</span>
+                                <span className="font-bold uppercase tracking-widest opacity-50" style={{ fontSize: "clamp(7px, 1.2vmin, 9px)" }}>EXP (Min)</span>
+                            </div>
+                            <div className="flex flex-col items-center justify-center gap-0.5">
+                                <Shield className="text-green-400 drop-shadow-sm mb-0.5" fill="currentColor" style={{ width: "clamp(11px, 2vmin, 15px)", height: "clamp(11px, 2vmin, 15px)" }} />
+                                <span className="font-black geo-nums leading-none" style={{ fontSize: "clamp(1.1rem, 4vmin, 1.5rem)" }}>{Math.floor(sessionsDone / sessionsUntilLong)}</span>
+                                <span className="font-bold uppercase tracking-widest opacity-50" style={{ fontSize: "clamp(7px, 1.2vmin, 9px)" }}>Rewards</span>
+                            </div>
                         </div>
                     </div>
 
-                    <button onClick={onResetSession} className="text-[10px] sm:text-xs font-bold opacity-40 hover:opacity-100 transition-all flex items-center gap-2 mt-1 mb-6 lg:mb-0 bg-black/5 dark:bg-white/5 px-4 py-2 rounded-full">
-                        <RefreshCw size={12} strokeWidth={2.5} />
-                        {t('resetAllSessions')}
-                    </button>
                 </div>
             </section>
 

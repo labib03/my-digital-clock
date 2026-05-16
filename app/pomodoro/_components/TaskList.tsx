@@ -92,7 +92,6 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
                         animate={{ width: `${progressPct}%` }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
                     />
-                    <Gift size={14} className="absolute right-2 text-white/50" />
                 </div>
             </div>
 
