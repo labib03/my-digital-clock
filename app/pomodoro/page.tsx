@@ -146,6 +146,27 @@ export default function PomodoroPage() {
         setTimeLeft(customFocus * 60);
     };
 
+    const handleFocusChange = (val: number) => {
+        setCustomFocus(val);
+        if (!running && phase === "focus") {
+            setTimeLeft(val * 60);
+        }
+    };
+
+    const handleShortBreakChange = (val: number) => {
+        setShortBreakDuration(val);
+        if (!running && phase === "short") {
+            setTimeLeft(val * 60);
+        }
+    };
+
+    const handleLongBreakChange = (val: number) => {
+        setLongBreakDuration(val);
+        if (!running && phase === "long") {
+            setTimeLeft(val * 60);
+        }
+    };
+
     const switchPhase = (p: Phase) => {
         stopWorker();
         setPhase(p);
@@ -212,15 +233,17 @@ export default function PomodoroPage() {
                 isDark={isDark}
                 cardBg={cardBg}
                 customFocus={customFocus}
-                sessionsUntilLong={sessionsUntilLong} // <-- Tambahkan ini
+                sessionsUntilLong={sessionsUntilLong}
                 sound={sound}
                 accentColor={current.color}
-                onFocusChange={setCustomFocus}
-                onSessionsUntilLongChange={setSessionsUntilLong} // <-- Tambahkan ini
+                // Ubah bagian ini menggunakan handler baru:
+                onFocusChange={handleFocusChange}
+                onSessionsUntilLongChange={setSessionsUntilLong}
                 onSoundChange={setSound}
                 longBreakDuration={longBreakDuration}
-                onLongBreakDurationChange={setLongBreakDuration}
-                shortBreakDuration={shortBreakDuration} onShortBreakDurationChange={setShortBreakDuration}
+                onLongBreakDurationChange={handleLongBreakChange}
+                shortBreakDuration={shortBreakDuration}
+                onShortBreakDurationChange={handleShortBreakChange}
             />
 
             <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0 scroll-smooth">
