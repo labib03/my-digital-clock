@@ -244,6 +244,7 @@ export default function PomodoroPage() {
                 onLongBreakDurationChange={handleLongBreakChange}
                 shortBreakDuration={shortBreakDuration}
                 onShortBreakDurationChange={handleShortBreakChange}
+                onToggleSettings={() => setShowSettings(s => !s)}
             />
 
             <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0 scroll-smooth">

@@ -114,7 +114,7 @@ export default function TimerSection({
                                     <div className={`absolute inset-[clamp(10px,2vmin,16px)] rounded-full border-[clamp(4px,1vmin,8px)] ${isDark ? 'border-[#1E1E24]' : 'border-[#F1F5F9]'} shadow-inner`} />
                                     <ProgressRing pct={pct} color={current.color} />
 
-                                    <div className="flex flex-col items-center z-10">
+                                    <div className="flex flex-col items-center justify-center z-10">
                                         <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter drop-shadow-md"
                                             style={{
                                                 fontSize: "clamp(2.75rem, 8.5vmin, 4.5rem)",
