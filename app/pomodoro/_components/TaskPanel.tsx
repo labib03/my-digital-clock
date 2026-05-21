@@ -4,20 +4,17 @@ import TaskList from "./TaskList";
 import LofiPlayer from "./LofiPlayer";
 import { useLanguage } from "@/components/shared/LanguageContext";
 import { Scroll } from "lucide-react";
+import { usePomodoroStore } from "../_store/usePomodoroStore";
+import { PHASES } from "./types";
 
-interface TaskPanelProps {
-    isDark: boolean;
-    accentColor: string;
-    customFocus: number;
-    sessionsUntilLong: number;
-    longBreakDuration: number;
-    shortBreakDuration: number;
-}
-
-export default function TaskPanel({
-    isDark, accentColor, customFocus, sessionsUntilLong, longBreakDuration, shortBreakDuration
-}: TaskPanelProps) {
+export default function TaskPanel() {
     const { t } = useLanguage();
+    
+    const {
+        isDark, phase, customFocus, shortBreakDuration, longBreakDuration, sessionsUntilLong
+    } = usePomodoroStore();
+    
+    const accentColor = PHASES[phase].color;
 
     // Panel Wrapper bergaya Quest Board (Neo-Brutalism)
     const questBoard = isDark
@@ -46,7 +43,7 @@ export default function TaskPanel({
                     </div>
 
                     <LofiPlayer isDark={isDark} accentColor={accentColor} />
-                    <TaskList isDark={isDark} accentColor={accentColor} />
+                    <TaskList />
 
                 </div>
 

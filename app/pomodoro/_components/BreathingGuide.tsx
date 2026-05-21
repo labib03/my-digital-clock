@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { BREATHING, BREATHING_CYCLE, type BreathPhase } from "./types";
 import { useLanguage } from "@/components/shared/LanguageContext";
@@ -61,63 +60,59 @@ export default function BreathingGuide({ color }: BreathingGuideProps) {
         return "";
     };
 
-    const petPulse = {
-        animate: {
-            scale: breathPhase === "inhale" ? 1.1 : breathPhase === "exhale" ? 0.9 : 1.0,
-            transition: {
-                duration: getPhaseDuration(breathPhase),
-                ease: "linear"
-            }
-        }
-    };
-
     return (
-        // Root div dilepas dimensi internalnya, parent TimerSection yang mengaturnya.
-        <div className="relative w-full h-full flex items-center justify-center select-none">
+        <div className="flex flex-col items-center justify-center gap-8 select-none">
 
-            <div className="absolute inset-2 sm:inset-3 rounded-full border-[6px] sm:border-[8px] border-black/10 dark:border-white/10 shadow-inner" />
+            {/* Circular Indicator */}
+            <div className="relative w-36 h-36 sm:w-48 sm:h-48 flex items-center justify-center">
+                {/* Thick background track */}
+                <div className="absolute inset-0 rounded-full border-[12px] sm:border-[16px] border-black/5 dark:border-white/5" />
+                
+                {/* Animated progress ring */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90 drop-shadow-md" viewBox="0 0 200 200">
+                    <motion.circle 
+                        cx="100" cy="100" r="86" 
+                        fill="none" 
+                        stroke={color} 
+                        strokeWidth="16" 
+                        strokeLinecap="round"
+                        style={{ strokeDasharray, strokeDashoffset }}
+                        transition={{ duration: 1, ease: "linear" }} 
+                    />
+                </svg>
 
-            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
-                <motion.circle cx="100" cy="100" r="90" fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
-                    style={{ strokeDasharray, strokeDashoffset }}
-                    transition={{ duration: 1, ease: "linear" }} />
-            </svg>
-
-            <div className="flex flex-col items-center justify-center z-10 mt-1">
-
-                {/* Wrapper Div khusus untuk Angka agar posisinya stabil */}
-                <div className="relative flex justify-center items-center h-[1.2em]">
-                    {/* HAPUS mode="wait" DI SINI agar layout stabil */}
+                {/* Animated Number inside the circle */}
+                <div className="relative flex justify-center items-center">
                     <AnimatePresence>
                         <motion.div
                             key={remainingPhase}
                             initial={{ opacity: 0, scale: 0.5 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            // Saat exit dibuat absolute agar tidak mendorong layout, dan angka baru langsung mengambil tempatnya
                             exit={{ opacity: 0, scale: 1.5, position: "absolute" }}
                             transition={{ duration: 0.3 }}
                             className="font-black geo-nums tabular-nums leading-none tracking-tighter"
-                            style={{ fontSize: "clamp(2.5rem, 6vh, 4rem)", color: color }}
+                            style={{ fontSize: "clamp(4rem, 8vh, 6rem)", color: color }}
                         >
                             {remainingPhase}
                         </motion.div>
                     </AnimatePresence>
                 </div>
+            </div>
 
-                {/* Wrapper Div khusus untuk Label Fase agar teks bawahnya tidak naik turun */}
-                <div className="relative flex justify-center items-center h-[20px] mt-8">
-                    <AnimatePresence mode="wait">
-                        <motion.span
-                            key={breathPhase}
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -5, position: "absolute" }}
-                            className="font-bold uppercase tracking-[0.2em] opacity-60 text-[9px] sm:text-[10px] bg-black/5 dark:bg-white/10 px-3 py-1 rounded-full text-center"
-                        >
-                            {getPhaseLabel(breathPhase)}
-                        </motion.span>
-                    </AnimatePresence>
-                </div>
+            {/* Phase Label Pill outside the circle */}
+            <div className="h-[40px] flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                    <motion.span
+                        key={breathPhase}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10, position: "absolute" }}
+                        className="font-black uppercase tracking-[0.3em] text-xs sm:text-sm px-6 py-3 rounded-full text-center shadow-sm"
+                        style={{ backgroundColor: `${color}20`, color: color }}
+                    >
+                        {getPhaseLabel(breathPhase)}
+                    </motion.span>
+                </AnimatePresence>
             </div>
         </div>
     );

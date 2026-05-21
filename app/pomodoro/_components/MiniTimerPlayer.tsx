@@ -4,22 +4,23 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipForward } from "lucide-react";
 import { PHASES, type Phase } from "./types";
 import { useLanguage } from "@/components/shared/LanguageContext";
+import { usePomodoroStore } from "../_store/usePomodoroStore";
 
 interface MiniTimerPlayerProps {
-    phase: Phase;
-    timeLeft: number;
-    running: boolean;
-    isDark: boolean;
-    fmt: (s: number) => string;
     onPlayPause: () => void;
     onSkip: () => void;
 }
 
 export default function MiniTimerPlayer({
-    phase, timeLeft, running, isDark, fmt, onPlayPause, onSkip
+    onPlayPause, onSkip
 }: MiniTimerPlayerProps) {
     const { t } = useLanguage();
+    const { phase, timeLeft, running, isDark } = usePomodoroStore();
+    
     const current = PHASES[phase];
+
+    const fmt = (s: number) =>
+        `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
     const getPhaseLabel = (p: Phase) => {
         if (p === "focus") return t('focus');

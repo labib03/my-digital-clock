@@ -7,6 +7,9 @@ export interface Task {
   id: string;
   text: string;
   done: boolean;
+  isActive?: boolean;
+  estimatedPomodoros?: number;
+  completedPomodoros?: number;
 }
 
 // PHASES sekarang hanya digunakan untuk referensi UI (warna tema).

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-
-import { DEFAULT_SETTINGS, PHASES, type Phase, type SoundOption } from "./_components/types";
+import { useEffect, useCallback, useRef, useState } from "react";
+import { PHASES } from "./_components/types";
 import { playBell, createNoiseNode } from "./_components/audio";
+import { usePomodoroStore } from "./_store/usePomodoroStore";
+import { useLanguage } from "@/components/shared/LanguageContext";
 
 import PomodoroHeader from "./_components/PomodoroHeader";
 import SettingsPanel from "./_components/SettingsPanel";
@@ -11,26 +12,20 @@ import TimerSection from "./_components/TimerSection";
 import TaskPanel from "./_components/TaskPanel";
 import ThemeDecoration from "./_components/ThemeDecoration";
 
-import { useLanguage } from "@/components/shared/LanguageContext";
-
-// ─── Pomodoro Page (orchestration only — no JSX details) ─────────────────────
-
 export default function PomodoroPage() {
     const { t } = useLanguage();
-    // ── State ──────────────────────────────────────────────────────────────
-    const [phase, setPhase] = useState<Phase>("focus");
-    const [running, setRunning] = useState(false);
-    const [sessionsDone, setSessionsDone] = useState(0);
-    const [isDark, setIsDark] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
-    const [sound, setSound] = useState<SoundOption>("off");
-    const [isFullscreen, setIsFullscreen] = useState(false);
+    
+    const { 
+        isDark, setIsFullscreen,
+        phase, running, setRunning,
+        timeLeft, tick, advancePhase, resetTimer, resetSession,
+        sound
+    } = usePomodoroStore();
 
-    const [customFocus, setCustomFocus] = useState(DEFAULT_SETTINGS.focusDuration);
-    const [longBreakDuration, setLongBreakDuration] = useState(DEFAULT_SETTINGS.longBreakDuration);
-    const [sessionsUntilLong, setSessionsUntilLong] = useState(DEFAULT_SETTINGS.sessionsUntilLong);
-    const [shortBreakDuration, setShortBreakDuration] = useState(DEFAULT_SETTINGS.shortBreakDuration);
-    const [timeLeft, setTimeLeft] = useState(customFocus * 60);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // ── Refs ───────────────────────────────────────────────────────────────
     const workerRef = useRef<Worker | null>(null);
@@ -38,42 +33,32 @@ export default function PomodoroPage() {
     const noiseNodeRef = useRef<AudioBufferSourceNode | null>(null);
     const noiseGainRef = useRef<GainNode | null>(null);
 
-    // ── Helper Pembaca Durasi ──────────────────────────────────────────────
-    // Fungsi ini menggantikan PHASES[p].duration
-    const getPhaseDuration = useCallback((p: Phase) => {
-        if (p === "focus") return customFocus * 60;
-        if (p === "long") return longBreakDuration * 60;
-        return shortBreakDuration * 60; // Sekarang mengambil dari state
-    }, [customFocus, longBreakDuration, shortBreakDuration]);
-
-    // ── Derived ────────────────────────────────────────────────────────────
-    const current = PHASES[phase];
-    const totalTime = getPhaseDuration(phase); // Gunakan helper
-    const pct = timeLeft / totalTime;
-    const fmt = (s: number) =>
-        `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-
-    // ── Web Worker Timer ───────────────────────────────────────────────────
-    useEffect(() => {
-        workerRef.current = new Worker("/timer.worker.js");
-        workerRef.current.onmessage = () =>
-            setTimeLeft(t => (t <= 1 ? 0 : t - 1));
-        return () => workerRef.current?.terminate();
-    }, []);
-
-    useEffect(() => {
-        if (timeLeft === 0 && running) advancePhase();
-    }, [timeLeft]);
-
     const stopWorker = useCallback(() => {
         workerRef.current?.postMessage({ type: "STOP" });
         setRunning(false);
-    }, []);
+    }, [setRunning]);
 
     const startWorker = useCallback(() => {
         workerRef.current?.postMessage({ type: "START" });
         setRunning(true);
-    }, []);
+    }, [setRunning]);
+
+    // ── Web Worker Timer ───────────────────────────────────────────────────
+    useEffect(() => {
+        workerRef.current = new Worker("/timer.worker.js");
+        workerRef.current.onmessage = () => {
+            tick();
+        };
+        return () => workerRef.current?.terminate();
+    }, [tick]);
+
+    useEffect(() => {
+        if (timeLeft === 0 && running) {
+            stopWorker();
+            ringBell();
+            advancePhase();
+        }
+    }, [timeLeft, running, stopWorker, advancePhase]);
 
     // ── Audio ──────────────────────────────────────────────────────────────
     const getAudioCtx = () => {
@@ -106,74 +91,34 @@ export default function PomodoroPage() {
         else stopNoise();
     }, [sound, running, phase, startNoise]);
 
-    const ringBell = useCallback(() => {
+    const ringBell = () => {
         try {
             const ctx = getAudioCtx();
             if (ctx.state === "suspended") ctx.resume();
             playBell(ctx);
         } catch { }
-    }, []);
+    };
 
-    // ── Phase Logic ────────────────────────────────────────────────────────
-    const advancePhase = useCallback(() => {
+    // ── Handlers that need worker access ────────────────────────────────────
+    const handleSkip = useCallback(() => {
         stopWorker();
-        ringBell();
-        if (phase === "focus") {
-            const next = sessionsDone + 1;
-            setSessionsDone(next);
-            if (next % sessionsUntilLong === 0) {
-                setPhase("long");
-                setTimeLeft(longBreakDuration * 60);
-            } else {
-                setPhase("short");
-                setTimeLeft(shortBreakDuration * 60); // Menggunakan state baru
-            }
-        } else {
-            setPhase("focus");
-            setTimeLeft(customFocus * 60);
-        }
-    }, [phase, sessionsDone, stopWorker, ringBell, customFocus, longBreakDuration, shortBreakDuration, sessionsUntilLong]);
+        advancePhase();
+    }, [stopWorker, advancePhase]);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         stopWorker();
-        setTimeLeft(getPhaseDuration(phase)); // Gunakan helper
-    };
-
-    const handleResetSession = () => {
+        resetTimer();
+    }, [stopWorker, resetTimer]);
+    
+    const handleResetSession = useCallback(() => {
         stopWorker();
-        setSessionsDone(0);
-        setPhase("focus");
-        setTimeLeft(customFocus * 60);
-    };
-
-    const handleFocusChange = (val: number) => {
-        setCustomFocus(val);
-        if (!running && phase === "focus") {
-            setTimeLeft(val * 60);
-        }
-    };
-
-    const handleShortBreakChange = (val: number) => {
-        setShortBreakDuration(val);
-        if (!running && phase === "short") {
-            setTimeLeft(val * 60);
-        }
-    };
-
-    const handleLongBreakChange = (val: number) => {
-        setLongBreakDuration(val);
-        if (!running && phase === "long") {
-            setTimeLeft(val * 60);
-        }
-    };
-
-    const switchPhase = (p: Phase) => {
-        stopWorker();
-        setPhase(p);
-        setTimeLeft(getPhaseDuration(p)); // Gunakan helper
-    };
+        resetSession();
+    }, [stopWorker, resetSession]);
 
     // ── Document title ─────────────────────────────────────────────────────
+    const fmt = (s: number) =>
+        `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
     useEffect(() => {
         const getPhaseLabel = () => {
             if (phase === "focus") return t('focus');
@@ -198,7 +143,7 @@ export default function PomodoroPage() {
                 setIsFullscreen(false);
             }
         }
-    }, []);
+    }, [setIsFullscreen]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -206,74 +151,32 @@ export default function PomodoroPage() {
         };
         document.addEventListener("fullscreenchange", handleFullscreenChange);
         return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-    }, []);
+    }, [setIsFullscreen]);
 
-    // ── Theme tokens — mirrors clock page exactly ──────────────────────────
+    // Hydration safe render
+    if (!mounted) return null;
+
+    // ── Theme tokens ───────────────────────────────────────────────────────
     const bg = isDark ? "bg-[#0A0A0A]" : "bg-[#F2F3F5]";
     const text = isDark ? "text-[#F5F5F5]" : "text-[#111827]";
     const cardBg = isDark ? "bg-white/5 border-white/10" : "bg-white/60 border-gray-200";
 
-    // ── Render ─────────────────────────────────────────────────────────────
     return (
         <div className={`h-screen overflow-hidden ${bg} ${text} flex flex-col transition-colors duration-300`}>
-
-            <ThemeDecoration isDark={isDark} />
-
+            <ThemeDecoration />
             <PomodoroHeader
-                isDark={isDark}
                 cardBg={cardBg}
-                isFullscreen={isFullscreen}
-                onToggleSettings={() => setShowSettings(s => !s)}
-                onToggleTheme={() => setIsDark(d => !d)}
                 onToggleFullscreen={toggleFullscreen}
             />
-
-            <SettingsPanel
-                show={showSettings}
-                isDark={isDark}
-                cardBg={cardBg}
-                customFocus={customFocus}
-                sessionsUntilLong={sessionsUntilLong}
-                sound={sound}
-                accentColor={current.color}
-                // Ubah bagian ini menggunakan handler baru:
-                onFocusChange={handleFocusChange}
-                onSessionsUntilLongChange={setSessionsUntilLong}
-                onSoundChange={setSound}
-                longBreakDuration={longBreakDuration}
-                onLongBreakDurationChange={handleLongBreakChange}
-                shortBreakDuration={shortBreakDuration}
-                onShortBreakDurationChange={handleShortBreakChange}
-                onToggleSettings={() => setShowSettings(s => !s)}
-            />
-
+            <SettingsPanel cardBg={cardBg} />
             <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden min-h-0 scroll-smooth">
-                <TimerSection
-                    isDark={isDark}
-                    phase={phase}
-                    timeLeft={timeLeft}
-                    running={running}
-                    pct={pct}
-                    sessionsDone={sessionsDone}
-                    customFocus={customFocus}
-                    sessionsUntilLong={sessionsUntilLong}
-                    fmt={fmt}
-                    onSwitchPhase={switchPhase}
+                <TimerSection 
+                    onPlayPause={running ? stopWorker : startWorker} 
                     onReset={handleReset}
                     onResetSession={handleResetSession}
-                    onPlayPause={running ? stopWorker : startWorker}
-                    onSkip={advancePhase}
-
+                    onSkip={handleSkip}
                 />
-                <TaskPanel
-                    isDark={isDark}
-                    accentColor={current.color}
-                    customFocus={customFocus}
-                    sessionsUntilLong={sessionsUntilLong}
-                    longBreakDuration={longBreakDuration}
-                    shortBreakDuration={shortBreakDuration}
-
-                />
+                <TaskPanel />
             </main>
         </div>
     );

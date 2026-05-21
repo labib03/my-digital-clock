@@ -20,11 +20,11 @@ export const translations = {
     sessionsUntilLong: "Long Break Interval",
     sessionsUntilLongDesc: "Sessions before long break",
     longBreakDuration: "Long Break Duration",
-    longBreakDurationDesc: "Duration for long break",
+    longBreakDurationDesc: "minutes per long break",
     inhale: "inhale",
     exhale: "exhale",
     shortBreakDuration: "Short Break Duration",
-    shortBreakDurationDesc: "Duration for short break",
+    shortBreakDurationDesc: "minutes per short break",
 
     // Dates
     days: [
@@ -150,11 +150,11 @@ export const translations = {
     sessionsUntilLong: "Interval Istirahat Panjang",
     sessionsUntilLongDesc: "Sesi sebelum istirahat panjang",
     longBreakDuration: "Durasi Istirahat Panjang",
-    longBreakDurationDesc: "Durasi untuk istirahat panjang",
+    longBreakDurationDesc: "menit per istirahat panjang",
     inhale: "tarik napas",
     exhale: "hembuskan napas",
     shortBreakDuration: "Durasi Istirahat Pendek",
-    shortBreakDurationDesc: "Durasi untuk istirahat pendek",
+    shortBreakDurationDesc: "menit per istirahat pendek",
 
     // Dates
     days: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"],

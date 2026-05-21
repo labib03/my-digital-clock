@@ -2,39 +2,52 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { Play, Pause, RotateCcw, SkipForward, RefreshCw, Star, Shield, Zap } from "lucide-react";
+import { Play, Pause, RotateCcw, SkipForward, Star, Shield, Zap, RefreshCcw } from "lucide-react";
 
 import { PHASES, type Phase } from "./types";
 import ProgressRing from "./ProgressRing";
-import SessionDots from "./SessionDots";
 import BreathingGuide from "./BreathingGuide";
 import MiniTimerPlayer from "./MiniTimerPlayer";
 import { useLanguage } from "@/components/shared/LanguageContext";
+import { usePomodoroStore } from "../_store/usePomodoroStore";
 
 interface TimerSectionProps {
-    isDark: boolean;
-    phase: Phase;
-    timeLeft: number;
-    running: boolean;
-    pct: number;
-    sessionsDone: number;
-    customFocus: number;
-    sessionsUntilLong: number;
-    fmt: (s: number) => string;
-    onSwitchPhase: (p: Phase) => void;
-    onReset: () => void;
-    onResetSession: () => void;
     onPlayPause: () => void;
     onSkip: () => void;
+    onReset: () => void;
+    onResetSession: () => void;
+}
+
+function clampIconSize(min: number, max: number) {
+    if (typeof window !== "undefined") {
+        const vw = window.innerWidth;
+        if (vw < 640) return min;
+        return max;
+    }
+    return min;
 }
 
 export default function TimerSection({
-    isDark, phase, timeLeft, running, pct,
-    sessionsDone, customFocus, sessionsUntilLong, fmt,
-    onSwitchPhase, onReset, onResetSession, onPlayPause, onSkip,
+    onPlayPause, onSkip, onReset, onResetSession
 }: TimerSectionProps) {
     const { t } = useLanguage();
+    
+    // Get everything from store!
+    const {
+        isDark, phase, timeLeft, running, sessionsDone,
+        customFocus, sessionsUntilLong, activeTaskName,
+        setPhase
+    } = usePomodoroStore();
+
     const current = PHASES[phase];
+
+    let totalTime = customFocus * 60;
+    if (phase === "short") totalTime = usePomodoroStore.getState().shortBreakDuration * 60;
+    if (phase === "long") totalTime = usePomodoroStore.getState().longBreakDuration * 60;
+    const pct = timeLeft / totalTime;
+
+    const fmt = (s: number) =>
+        `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
     const { ref: timerRef, inView: timerInView } = useInView({
         threshold: 0.1,
@@ -56,181 +69,195 @@ export default function TimerSection({
         ? "bg-[#2A2A35] border-2 sm:border-[3px] border-[#0F0F13] text-white shadow-[0_3px_0_#0F0F13] sm:shadow-[0_4px_0_#0F0F13] hover:brightness-110"
         : "bg-white border-2 sm:border-[3px] border-[#CBD5E1] text-slate-700 shadow-[0_3px_0_#94A3B8] sm:shadow-[0_4px_0_#94A3B8] hover:brightness-95";
 
+    const textCol = isDark ? '#fff' : '#111827';
+
     return (
         <>
-            <section className="relative lg:flex-1 flex flex-col items-center py-[clamp(1rem,3vmin,2.5rem)] lg:overflow-hidden shrink-0 scroll-smooth z-10 w-full">
-                <div className="flex-1 flex flex-col items-center justify-center gap-[clamp(0.75rem,3.5vmin,2rem)] w-full max-w-md mx-auto px-4">
-
+            <section className="relative lg:flex-1 flex flex-col items-center py-4 lg:py-6 lg:overflow-hidden shrink-0 scroll-smooth z-10 w-full">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-5 w-full max-w-lg lg:max-w-3xl mx-auto px-4">
+                    
                     {/* 1. DYNAMIC TABS BLOCK */}
-                    <div className={`relative flex p-[clamp(4px,1vmin,8px)] rounded-2xl ${gamePanel}`}>
+                    <div className={`relative flex p-1.5 sm:p-2 rounded-2xl w-fit mx-auto ${gamePanel}`}>
                         {(Object.entries(PHASES) as [Phase, typeof PHASES[Phase]][]).map(([key, val]) => {
                             const isActive = phase === key;
                             return (
                                 <button
                                     key={key}
-                                    onClick={() => onSwitchPhase(key)}
-                                    className="relative px-[clamp(0.75rem,2.5vmin,1.5rem)] py-[clamp(0.35rem,1.5vmin,0.65rem)] rounded-xl font-bold uppercase tracking-widest z-10 transition-colors"
-                                    style={{
-                                        color: isActive ? '#fff' : (isDark ? '#888' : '#666'),
-                                        fontSize: "clamp(9px, 1.5vmin, 12px)"
+                                    onClick={() => {
+                                        if (!running) setPhase(key as Phase);
                                     }}
+                                    disabled={running}
+                                    className={`relative px-3 sm:px-6 py-1.5 sm:py-2 rounded-xl font-bold uppercase tracking-widest z-10 transition-colors text-[9px] sm:text-xs ${running ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                                    style={{ color: isActive ? '#fff' : (isDark ? '#888' : '#666'), opacity: (running && !isActive) ? 0.3 : 1 }}
                                 >
                                     {isActive && (
                                         <motion.div
-                                            layoutId="gameActivePhase"
-                                            className="absolute inset-0 rounded-xl z-[-1] border-2 border-black/10 shadow-[0_3px_0_rgba(0,0,0,0.2)]"
+                                            layoutId="active-tab"
+                                            className="absolute inset-0 rounded-xl -z-10 shadow-sm"
                                             style={{ backgroundColor: val.color }}
-                                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
                                         />
                                     )}
-                                    <span className="drop-shadow-sm">{getPhaseLabel(key)}</span>
+                                    {getPhaseLabel(key as Phase)}
                                 </button>
                             );
                         })}
                     </div>
 
-                    {/* 2. DYNAMIC TIMER ARENA */}
-                    <div ref={timerRef} className="flex justify-center w-full relative">
-                        <AnimatePresence mode="wait">
-                            {(phase === "short" || phase === "long") && running ? (
-                                <motion.div key="breathing"
-                                    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                                    className="relative flex items-center justify-center select-none"
-                                    style={{
-                                        width: "clamp(190px, 36vmin, 270px)",
-                                        height: "clamp(190px, 36vmin, 270px)"
-                                    }}>
-                                    <BreathingGuide color={current.color} />
-                                </motion.div>
-                            ) : (
-                                <motion.div key="timer"
-                                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-                                    className="relative flex items-center justify-center select-none"
-                                    style={{
-                                        width: "clamp(190px, 36vmin, 270px)",
-                                        height: "clamp(190px, 36vmin, 270px)"
-                                    }}>
-
-                                    <div className={`absolute inset-[clamp(10px,2vmin,16px)] rounded-full border-[clamp(4px,1vmin,8px)] ${isDark ? 'border-[#1E1E24]' : 'border-[#F1F5F9]'} shadow-inner`} />
-                                    <ProgressRing pct={pct} color={current.color} />
-
-                                    <div className="flex flex-col items-center justify-center z-10">
-                                        <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter drop-shadow-md"
-                                            style={{
-                                                fontSize: "clamp(2.75rem, 8.5vmin, 4.5rem)",
-                                                color: running ? current.color : (isDark ? '#fff' : '#333')
-                                            }}>
-                                            {fmt(timeLeft)}
-                                        </div>
-                                        <motion.span key={phase} className="font-bold uppercase tracking-[0.2em] opacity-50 text-[clamp(8px,1.2vmin,10px)] mt-1.5 bg-black/5 dark:bg-white/10 px-2.5 py-0.5 rounded-full">
-                                            Level {(sessionsDone % sessionsUntilLong) + 1}
-                                        </motion.span>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* DYNAMIC SESSION DOTS CONTAINER */}
-                    <div className="h-[12px] flex items-center justify-center">
-                        <SessionDots completed={sessionsDone % sessionsUntilLong} total={sessionsUntilLong} color={current.color} />
-                    </div>
-
-                    {/* 3. DYNAMIC CONTROLS */}
-                    <div className="flex items-center gap-[clamp(0.75rem,3vmin,1.5rem)] mt-0.5">
-                        <motion.button onClick={onReset}
-                            className={`rounded-2xl flex items-center justify-center transition-colors ${gameButton}`}
-                            style={{
-                                width: "clamp(2.75rem, 7.5vmin, 3.5rem)",
-                                height: "clamp(2.75rem, 7.5vmin, 3.5rem)"
-                            }}
-                            whileTap={{ y: 3, boxShadow: "0 0px 0 rgba(0,0,0,0)" }}
-                            aria-label={t('reset')}>
-                            <RotateCcw strokeWidth={3} style={{ width: "clamp(16px, 3.5vmin, 22px)", height: "clamp(16px, 3.5vmin, 22px)" }} />
-                        </motion.button>
-
-                        <motion.button
-                            onClick={onPlayPause}
-                            className="rounded-[clamp(1.25rem,3.5vmin,1.75rem)] text-white flex items-center justify-center border-b-[4px] sm:border-b-[5px] border-black/20"
-                            style={{
-                                backgroundColor: current.color,
-                                boxShadow: `0 5px 0 ${current.color}80`,
-                                width: "clamp(4.25rem, 11.5vmin, 5.5rem)",
-                                height: "clamp(4.25rem, 11.5vmin, 5.5rem)"
-                            }}
-                            whileTap={{ y: 5, boxShadow: `0 0px 0 ${current.color}80`, borderBottomWidth: "0px", marginTop: "4px" }}
-                        >
+                    {/* 2. BENTO GRID */}
+                    <div ref={timerRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 w-full mt-2">
+                        
+                        {/* LEFT: VISUAL ARENA */}
+                        <div className={`flex flex-col items-center justify-center p-6 sm:p-8 rounded-[2rem] ${gamePanel} h-full min-h-[320px]`}>
                             <AnimatePresence mode="wait">
-                                {running
-                                    ? <motion.div key="pause" initial={{ scale: 0.5 }} animate={{ scale: 1 }} exit={{ scale: 0.5 }}>
-                                        <Pause fill="currentColor" style={{ width: "clamp(26px, 6.5vmin, 40px)", height: "clamp(26px, 6.5vmin, 40px)" }} />
+                                {(phase === "short" || phase === "long") && running ? (
+                                    <motion.div key="breathing"
+                                        initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                                        className="flex flex-col items-center justify-center gap-6 w-full h-full"
+                                    >
+                                        <BreathingGuide color={current.color} />
+                                        <div className="flex flex-col items-center">
+                                            <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter opacity-50"
+                                                style={{ fontSize: "clamp(2rem, 5vmin, 3rem)", color: textCol }}>
+                                                {fmt(timeLeft)}
+                                            </div>
+                                            <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-40 mt-1">
+                                                {phase === "short" ? "Short Break" : "Long Break"} Left
+                                            </div>
+                                        </div>
                                     </motion.div>
-                                    : <motion.div key="play" initial={{ scale: 0.5 }} animate={{ scale: 1 }} exit={{ scale: 0.5 }}>
-                                        <Play fill="currentColor" className="ml-1" style={{ width: "clamp(26px, 6.5vmin, 40px)", height: "clamp(26px, 6.5vmin, 40px)" }} />
+                                ) : (
+                                    <motion.div key="timer"
+                                        initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                                        className="relative flex flex-col items-center justify-center w-full h-full"
+                                    >
+                                        <div style={{ width: "clamp(180px, 30vmin, 240px)", height: "clamp(180px, 30vmin, 240px)" }} className="relative flex items-center justify-center">
+                                            <div className="absolute inset-0 rounded-full border-[clamp(6px,2vmin,12px)] border-black/5 dark:border-white/5" />
+                                            <ProgressRing pct={pct} color={current.color} />
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none drop-shadow-sm">
+                                                <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter"
+                                                    style={{ fontSize: "clamp(3.5rem, 8vmin, 5rem)", color: textCol, textShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                                                    {fmt(timeLeft)}
+                                                </div>
+                                                <motion.span key={phase} className="font-bold uppercase tracking-widest opacity-40 text-[10px] sm:text-xs mt-2">
+                                                    Level {(sessionsDone % sessionsUntilLong) + 1}
+                                                </motion.span>
+                                            </div>
+                                        </div>
                                     </motion.div>
-                                }
+                                )}
                             </AnimatePresence>
-                        </motion.button>
 
-                        <motion.button onClick={onSkip}
-                            className={`rounded-2xl flex items-center justify-center transition-colors ${gameButton}`}
-                            style={{
-                                width: "clamp(2.75rem, 7.5vmin, 3.5rem)",
-                                height: "clamp(2.75rem, 7.5vmin, 3.5rem)"
-                            }}
-                            whileTap={{ y: 3, boxShadow: "0 0px 0 rgba(0,0,0,0)" }}
-                            aria-label={t('skip')}>
-                            <SkipForward strokeWidth={3} style={{ width: "clamp(16px, 3.5vmin, 22px)", height: "clamp(16px, 3.5vmin, 22px)" }} />
-                        </motion.button>
-                    </div>
-
-                    {/* 4. DYNAMIC STATS PANEL & RESET BUTTON (MERGED) */}
-                    <div className="relative w-full mt-0.5">
-
-                        {/* Tombol Reset All Sessions - Melayang di kanan atas */}
-                        <button
-                            onClick={onResetSession}
-                            title={t('resetAllSessions')}
-                            aria-label={t('resetAllSessions')}
-                            className={`absolute -top-2 -right-2 sm:-top-3 sm:-right-3 z-20 
-                                flex items-center justify-center rounded-full transition-all duration-300
-                                opacity-60 hover:opacity-100 hover:scale-110 active:scale-95
-                                ${isDark
-                                    ? 'bg-[#2A2A35] text-white/70 hover:text-red-400 border border-[#1E1E24]'
-                                    : 'bg-white text-slate-500 hover:text-red-500 border border-slate-200 shadow-sm'}`}
-                            style={{
-                                width: "clamp(24px, 4.5vmin, 32px)",
-                                height: "clamp(24px, 4.5vmin, 32px)"
-                            }}
-                        >
-                            <RefreshCw strokeWidth={2.5} style={{ width: "clamp(12px, 2vmin, 16px)", height: "clamp(12px, 2vmin, 16px)" }} />
-                        </button>
-
-                        <div className={`w-full grid grid-cols-3 gap-[clamp(4px,1.5vmin,12px)] rounded-2xl p-[clamp(0.5rem,2.5vmin,1rem)] ${gamePanel}`}>
-                            <div className="flex flex-col items-center justify-center gap-0.5">
-                                <Star className="text-yellow-400 drop-shadow-sm mb-0.5" fill="currentColor" style={{ width: "clamp(11px, 2vmin, 15px)", height: "clamp(11px, 2vmin, 15px)" }} />
-                                <span className="font-black geo-nums leading-none" style={{ fontSize: "clamp(1.1rem, 4vmin, 1.5rem)" }}>{sessionsDone}</span>
-                                <span className="font-bold uppercase tracking-widest opacity-50" style={{ fontSize: "clamp(7px, 1.2vmin, 9px)" }}>Streaks</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center gap-0.5 border-x-2 border-dashed" style={{ borderColor: isDark ? '#2A2A35' : '#E2E8F0' }}>
-                                <Zap className="text-blue-400 drop-shadow-sm mb-0.5" fill="currentColor" style={{ width: "clamp(11px, 2vmin, 15px)", height: "clamp(11px, 2vmin, 15px)" }} />
-                                <span className="font-black geo-nums leading-none" style={{ fontSize: "clamp(1.1rem, 4vmin, 1.5rem)" }}>{sessionsDone * customFocus}</span>
-                                <span className="font-bold uppercase tracking-widest opacity-50" style={{ fontSize: "clamp(7px, 1.2vmin, 9px)" }}>EXP (Min)</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center gap-0.5">
-                                <Shield className="text-green-400 drop-shadow-sm mb-0.5" fill="currentColor" style={{ width: "clamp(11px, 2vmin, 15px)", height: "clamp(11px, 2vmin, 15px)" }} />
-                                <span className="font-black geo-nums leading-none" style={{ fontSize: "clamp(1.1rem, 4vmin, 1.5rem)" }}>{Math.floor(sessionsDone / sessionsUntilLong)}</span>
-                                <span className="font-bold uppercase tracking-widest opacity-50" style={{ fontSize: "clamp(7px, 1.2vmin, 9px)" }}>Rewards</span>
+                            {/* SESSION DOTS */}
+                            <div className="flex justify-center gap-2.5 mt-auto pt-8">
+                                {Array.from({ length: sessionsUntilLong }).map((_, i) => {
+                                    const cycleDone = sessionsDone % sessionsUntilLong;
+                                    const active = i < cycleDone;
+                                    const currentSession = i === cycleDone && phase === "focus" && running;
+                                    return (
+                                        <div key={i} className="relative w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: active ? PHASES.focus.color : isDark ? '#333' : '#E2E8F0' }}>
+                                            {currentSession && (
+                                                <span className="absolute inset-0 rounded-full animate-ping opacity-75" style={{ backgroundColor: PHASES.focus.color }} />
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
-                    </div>
 
+                        {/* RIGHT: INFO, CONTROLS, STATS */}
+                        <div className="flex flex-col gap-4 sm:gap-5 h-full">
+                            
+                            {/* ACTIVE TASK CARD */}
+                            <div className={`flex flex-col justify-center p-5 sm:p-6 rounded-[2rem] ${gamePanel}`}>
+                                <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-3 flex items-center gap-2">
+                                    Current Quest
+                                </p>
+                                <div className="min-h-[44px] sm:min-h-[48px] flex items-center">
+                                    {activeTaskName ? (
+                                        <div className="font-bold text-sm sm:text-base leading-snug break-words flex items-start gap-3 w-full">
+                                            <span className="w-3 h-3 rounded-full shrink-0 mt-1.5 animate-pulse" style={{ backgroundColor: current.color }}></span>
+                                            <span className="line-clamp-2">{activeTaskName}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="font-bold text-sm opacity-30 italic">
+                                            No active quest selected.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* CONTROLS CARD */}
+                            <div className={`flex items-center justify-center gap-4 sm:gap-6 p-5 sm:p-6 rounded-[2rem] ${gamePanel} flex-1`}>
+                                <button
+                                    onClick={onReset}
+                                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform active:scale-90 ${gameButton}`}
+                                    aria-label="Reset Timer"
+                                >
+                                    <RotateCcw size={20} strokeWidth={2.5} className="opacity-70" />
+                                </button>
+                                
+                                <button
+                                    onClick={onPlayPause}
+                                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-lg relative group overflow-hidden"
+                                    style={{ backgroundColor: current.color }}
+                                    aria-label={running ? "Pause Timer" : "Start Timer"}
+                                >
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-200" />
+                                    <div className="relative z-10 text-white drop-shadow-md">
+                                        {running ? <Pause className="w-7 h-7 sm:w-9 sm:h-9" fill="currentColor" /> : <Play className="w-7 h-7 sm:w-9 sm:h-9 ml-1" fill="currentColor" />}
+                                    </div>
+                                </button>
+                                
+                                <button
+                                    onClick={onSkip}
+                                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform active:scale-90 ${gameButton}`}
+                                    aria-label="Skip Phase"
+                                >
+                                    <SkipForward size={20} strokeWidth={2.5} className="opacity-70" />
+                                </button>
+                            </div>
+
+                            {/* STATS CARD */}
+                            <div className={`flex items-center justify-around px-4 py-5 sm:p-6 rounded-[2rem] ${gamePanel}`}>
+                                <div className="flex flex-col items-center">
+                                    <Star size={20} className="text-yellow-400 mb-2 drop-shadow-sm" fill="currentColor" />
+                                    <span className="font-extrabold text-xl leading-none geo-nums">{sessionsDone}</span>
+                                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 mt-1.5">Streaks</span>
+                                </div>
+                                <div className="w-px h-8 bg-black/10 dark:bg-white/10" />
+                                <div className="flex flex-col items-center">
+                                    <Zap size={20} className="text-blue-500 mb-2 drop-shadow-sm" fill="currentColor" />
+                                    <span className="font-extrabold text-xl leading-none geo-nums">
+                                        {Math.floor((sessionsDone * customFocus))}
+                                    </span>
+                                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 mt-1.5">EXP (Min)</span>
+                                </div>
+                                <div className="w-px h-8 bg-black/10 dark:bg-white/10" />
+                                <div className="flex flex-col items-center relative group">
+                                    <button
+                                        onClick={onResetSession}
+                                        className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-red-500 text-white rounded-full hover:scale-110 shadow-sm"
+                                        aria-label="Reset All Sessions"
+                                    >
+                                        <RefreshCcw size={12} strokeWidth={3} />
+                                    </button>
+                                    <Shield size={20} className="text-green-500 mb-2 drop-shadow-sm" fill="currentColor" />
+                                    <span className="font-extrabold text-xl leading-none geo-nums">
+                                        {Math.floor(sessionsDone / sessionsUntilLong)}
+                                    </span>
+                                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest opacity-40 mt-1.5">Rewards</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </section>
 
             <AnimatePresence>
                 {!timerInView && (
-                    <MiniTimerPlayer phase={phase} timeLeft={timeLeft} running={running} isDark={isDark} fmt={fmt} onPlayPause={onPlayPause} onSkip={onSkip} />
+                    <MiniTimerPlayer onPlayPause={onPlayPause} onSkip={onSkip} />
                 )}
             </AnimatePresence>
         </>

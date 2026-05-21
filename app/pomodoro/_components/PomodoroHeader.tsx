@@ -3,27 +3,21 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/components/shared/LanguageContext";
-
-// ─── PomodoroHeader ───────────────────────────────────────────────────────────
+import { usePomodoroStore } from "../_store/usePomodoroStore";
 
 interface PomodoroHeaderProps {
-    isDark: boolean;
     cardBg: string;
-    isFullscreen: boolean;
-    onToggleSettings: () => void;
-    onToggleTheme: () => void;
     onToggleFullscreen: () => void;
 }
 
 export default function PomodoroHeader({
-    isDark,
     cardBg,
-    isFullscreen,
-    onToggleSettings,
-    onToggleTheme,
     onToggleFullscreen
 }: PomodoroHeaderProps) {
     const { t } = useLanguage();
+    
+    const { isDark, isFullscreen, setShowSettings, setIsDark } = usePomodoroStore();
+    
     const [isInstallAvailable, setIsInstallAvailable] = useState(false);
 
     useEffect(() => {
@@ -85,7 +79,7 @@ export default function PomodoroHeader({
                 </button>
 
                 {/* Settings toggle */}
-                <button onClick={onToggleSettings}
+                <button onClick={() => setShowSettings(prev => !prev)}
                     className={`p-2 rounded-full border ${cardBg} cursor-pointer opacity-60 hover:opacity-100 transition-all`}
                     aria-label={t('settings')}
                     title={t('settings')}>
@@ -96,7 +90,7 @@ export default function PomodoroHeader({
                 </button>
 
                 {/* Theme toggle */}
-                <button onClick={onToggleTheme}
+                <button onClick={() => setIsDark(prev => !prev)}
                     className={`p-2 rounded-full border ${cardBg} cursor-pointer opacity-60 hover:opacity-100 transition-all`}
                     aria-label={t('toggleTheme')}
                     title={t('toggleTheme')}>

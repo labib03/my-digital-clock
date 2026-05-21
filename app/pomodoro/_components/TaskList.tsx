@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Task } from "./types";
 import { useLanguage } from "@/components/shared/LanguageContext";
 import { Gift, Sword, Trash2, Plus, Check, Frown } from "lucide-react";
+import { usePomodoroStore } from "../_store/usePomodoroStore";
+import { PHASES } from "./types";
 
-interface TaskListProps {
-    isDark: boolean;
-    accentColor: string;
-}
-
-export default function TaskList({ isDark, accentColor }: TaskListProps) {
+export default function TaskList() {
     const { t } = useLanguage();
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [claimedTasks, setClaimedTasks] = useState<Task[]>([]);
+    
+    const { 
+        isDark, phase,
+        tasks, claimedTasks,
+        addTask, toggleTask, removeTask, claimTask, toggleActive, resetQuests
+    } = usePomodoroStore();
+
     const [input, setInput] = useState("");
+    const [estimate, setEstimate] = useState(1);
+    
+    const accentColor = PHASES[phase].color;
 
     const gamePanel = isDark
         ? "bg-[#1E1E24] border-[3px] border-[#0F0F13] shadow-[0_4px_0_#0F0F13]"
@@ -23,48 +27,18 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
 
     const taskRowBg = isDark ? "bg-[#2A2A35] border-2 border-[#0F0F13]" : "bg-gray-50 border-2 border-[#E2E8F0]";
 
-    useEffect(() => {
-        const saved = localStorage.getItem("pomodoro-tasks");
-        const savedClaimed = localStorage.getItem("pomodoro-claimed-tasks");
-
-        if (saved) setTasks(JSON.parse(saved));
-        if (savedClaimed) {
-            try {
-                setClaimedTasks(JSON.parse(savedClaimed));
-            } catch (e) {
-                setClaimedTasks([]);
-            }
-        }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem("pomodoro-tasks", JSON.stringify(tasks));
-        localStorage.setItem("pomodoro-claimed-tasks", JSON.stringify(claimedTasks));
-    }, [tasks, claimedTasks]);
-
-    const addTask = () => {
+    const handleAddTask = () => {
         if (!input.trim()) return;
-        setTasks(prev => [{ id: Date.now().toString(), text: input.trim(), done: false }, ...prev]);
+        addTask({ 
+            id: Date.now().toString(), 
+            text: input.trim(), 
+            done: false, 
+            estimatedPomodoros: estimate, 
+            completedPomodoros: 0, 
+            isActive: false 
+        });
         setInput("");
-    };
-
-    const toggleTask = (id: string) =>
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
-
-    const removeTask = (id: string) =>
-        setTasks(prev => prev.filter(t => t.id !== id));
-
-    const claimTask = (id: string) => {
-        const taskToClaim = tasks.find(t => t.id === id);
-        if (taskToClaim) {
-            setTasks(prev => prev.filter(t => t.id !== id));
-            setClaimedTasks(prev => [{ ...taskToClaim, done: true }, ...prev]);
-        }
-    };
-
-    const resetQuests = () => {
-        setTasks([]);
-        setClaimedTasks([]);
+        setEstimate(1);
     };
 
     const claimedCount = claimedTasks.length;
@@ -96,7 +70,17 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
             </div>
 
             {/* Input Quest Baru */}
-            <form onSubmit={e => { e.preventDefault(); addTask(); }} className="flex gap-2">
+            <form onSubmit={e => { e.preventDefault(); handleAddTask(); }} className="flex gap-2">
+                <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={estimate}
+                    onChange={e => setEstimate(parseInt(e.target.value) || 1)}
+                    className={`w-14 sm:w-16 text-center text-xs sm:text-sm font-bold px-2 py-2.5 sm:py-3 rounded-xl border-2 outline-none transition ${isDark
+                        ? "bg-[#0F0F13] border-[#2A2A35] focus:border-white/20"
+                        : "bg-gray-100 border-gray-200 focus:border-gray-400"}`}
+                />
                 <input
                     value={input}
                     onChange={e => setInput(e.target.value)}
@@ -114,140 +98,118 @@ export default function TaskList({ isDark, accentColor }: TaskListProps) {
 
             {/* Active Task List */}
             <motion.div layout className="flex flex-col gap-2 overflow-hidden pb-1">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="popLayout">
                     {tasks.length === 0 && claimedTasks.length === 0 ? (
                         <motion.div
                             key="empty"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="w-full flex flex-col items-center justify-center gap-3 py-8 text-center"
-                        >
-                            <Frown size={32} className="opacity-20" />
-                            <p className="text-xs font-bold opacity-30 uppercase tracking-widest">
-                                No active quests
-                            </p>
-                        </motion.div>
-                    ) : (
-                        /* Membungkus daftar tugas dalam motion.div untuk menjaga stabilitas layout */
-                        <motion.div
-                            key="list-container"
                             layout
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="flex flex-col gap-2"
+                            transition={{ duration: 0.2 }}
+                            className="text-center py-6 sm:py-10 opacity-30 font-bold text-sm w-full"
                         >
-                            <AnimatePresence mode="popLayout" initial={false}>
-                                {tasks.map(task => (
-                                    <motion.div
-                                        key={task.id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                                        exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                                        transition={{ duration: 0.2 }}
-                                        className={`w-full flex flex-col sm:flex-row sm:items-center gap-3 px-3 py-3 sm:py-2.5 rounded-2xl ${taskRowBg}`}
-                                    >
-                                        {/* ... Isi komponen task sama seperti sebelumnya ... */}
-                                        <div className="flex-1 flex items-center gap-3 pl-1">
-                                            <button onClick={() => toggleTask(task.id)}
-                                                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${task.done ? 'border-transparent' : (isDark ? 'border-white/20' : 'border-black/20')}`}
-                                                style={{ backgroundColor: task.done ? accentColor : 'transparent' }}>
-                                                {task.done && <Check size={14} strokeWidth={4} color="white" />}
-                                            </button>
-                                            <span className={`text-xs sm:text-sm font-bold transition-all`}>
-                                                {task.text}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 justify-end">
-                                            <button onClick={() => removeTask(task.id)} className="w-8 h-8 flex items-center justify-center opacity-30 hover:opacity-100 hover:text-red-500 transition-colors">
-                                                <Trash2 size={16} strokeWidth={2.5} />
-                                            </button>
-
-                                            <AnimatePresence mode="wait">
-                                                {task.done ? (
-                                                    <motion.button key="claim"
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        transition={{ duration: 0.15 }}
-                                                        onClick={() => claimTask(task.id)}
-                                                        className="px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase text-yellow-900 bg-yellow-400 shadow-[0_3px_0_#A16207] active:scale-95 active:shadow-none active:translate-y-[3px] transition-all relative overflow-hidden group">
-                                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-200" />
-                                                        <span className="relative z-10">CLAIM</span>
-                                                    </motion.button>
-                                                ) : (
-                                                    <motion.button key="go"
-                                                        initial={{ scale: 0.8, opacity: 0 }}
-                                                        animate={{ scale: 1, opacity: 1 }}
-                                                        exit={{ scale: 0.8, opacity: 0 }}
-                                                        transition={{ duration: 0.15 }}
-                                                        onClick={() => toggleTask(task.id)}
-                                                        className="px-4 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase bg-black/10 dark:bg-white/10 opacity-50 hover:opacity-100 active:scale-95 transition-all">
-                                                        GO
-                                                    </motion.button>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
+                            No active quests. Add one to begin your journey!
                         </motion.div>
+                    ) : (
+                        tasks.map((task) => (
+                            <motion.div
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.2, ease: "easeOut" }}
+                                key={task.id}
+                                className={`group flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 rounded-2xl ${taskRowBg} transition-colors w-full origin-top`}
+                                style={{ borderColor: task.isActive ? accentColor : undefined }}
+                            >
+                                {/* Checkbox area */}
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <button
+                                        onClick={() => toggleTask(task.id)}
+                                        className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 rounded-lg border-2 flex items-center justify-center transition-colors ${task.done ? 'text-white border-transparent' : 'border-black/20 dark:border-white/20'}`}
+                                        style={{ backgroundColor: task.done ? accentColor : 'transparent' }}
+                                    >
+                                        {task.done && <Check size={14} strokeWidth={4} />}
+                                    </button>
+                                    
+                                    <div className="flex-1 min-w-0">
+                                        <button
+                                            onClick={() => !task.done && toggleActive(task.id)}
+                                            className={`text-left w-full truncate font-bold text-sm sm:text-base ${task.done ? 'line-through opacity-40' : 'hover:opacity-80 transition-opacity'}`}
+                                        >
+                                            {task.text}
+                                        </button>
+                                        {/* Progress Pip */}
+                                        <div className="flex items-center gap-1 mt-1.5 opacity-60">
+                                            {Array.from({ length: Math.max(task.estimatedPomodoros || 1, task.completedPomodoros || 0) }).map((_, i) => {
+                                                const isCompleted = i < (task.completedPomodoros || 0);
+                                                const isOvertime = i >= (task.estimatedPomodoros || 1);
+                                                return (
+                                                    <div
+                                                        key={i}
+                                                        className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isCompleted ? '' : 'bg-black/10 dark:bg-white/10'}`}
+                                                        style={{ backgroundColor: isCompleted ? (isOvertime ? '#ef4444' : accentColor) : undefined }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Mobile action buttons (visible on mobile, grouped with checkbox area) */}
+                                    <div className="flex sm:hidden gap-2">
+                                        {task.done ? (
+                                            <button onClick={() => claimTask(task.id)} className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: accentColor }}>
+                                                <Gift size={14} strokeWidth={2.5} />
+                                            </button>
+                                        ) : null}
+                                        <button onClick={() => removeTask(task.id)} className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-red-500 hover:text-white transition-colors">
+                                            <Trash2 size={14} strokeWidth={2.5} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Desktop action buttons (hidden on mobile, pushed right on desktop) */}
+                                <div className="hidden sm:flex items-center gap-2 ml-auto">
+                                    {task.done ? (
+                                        <button onClick={() => claimTask(task.id)} className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-transform active:scale-95 flex items-center gap-2" style={{ backgroundColor: accentColor }}>
+                                            <Gift size={14} strokeWidth={2.5} /> Claim
+                                        </button>
+                                    ) : null}
+                                    <button onClick={() => removeTask(task.id)} className="w-8 h-8 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-red-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+                                        <Trash2 size={14} strokeWidth={2.5} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))
                     )}
                 </AnimatePresence>
             </motion.div>
 
-            {/* Claimed Rewards Section */}
-            <AnimatePresence>
-                {claimedTasks.length > 0 && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        // Ditambahkan overflow-x-hidden di sini
-                        className="flex flex-col gap-3 mt-2 pt-4 border-t-2 border-dashed border-black/10 dark:border-white/10 overflow-x-hidden overflow-y-hidden"
-                    >
-                        <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest opacity-40 flex items-center gap-2">
-                            <Gift size={14} /> Claimed Rewards
-                        </p>
-                        <div className="flex flex-col gap-2">
-                            <AnimatePresence initial={false}>
-                                {claimedTasks.map(task => (
-                                    <motion.div key={task.id}
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ duration: 0.2 }}
-                                        // Ditambahkan w-full di sini
-                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl opacity-60 ${taskRowBg}`}>
+            {/* Completed/Claimed Quests */}
+            {claimedTasks.length > 0 && (
+                <div className="mt-4 border-t border-black/5 dark:border-white/5 pt-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-3 px-2">Completed Quests</p>
+                    <div className="flex flex-col gap-2">
+                        {claimedTasks.map(task => (
+                            <div key={task.id} className={`flex items-center gap-3 p-3 rounded-xl ${taskRowBg} opacity-50`}>
+                                <div className="w-5 h-5 rounded-md flex flex-shrink-0 items-center justify-center text-white" style={{ backgroundColor: accentColor }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>
+                                <span className="text-sm font-bold line-through truncate w-full">{task.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-                                        <div className="w-5 h-5 rounded border-2 border-transparent flex items-center justify-center flex-shrink-0" style={{ backgroundColor: accentColor }}>
-                                            <Check size={12} strokeWidth={4} color="white" />
-                                        </div>
-                                        <span className="text-xs sm:text-sm font-bold line-through truncate opacity-70 flex-1 pl-1">
-                                            {task.text}
-                                        </span>
-                                        <motion.span
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            transition={{ delay: 0.1, duration: 0.2 }}
-                                            className="ml-auto text-[10px] font-black uppercase text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-md flex-shrink-0">
-                                            +EXP
-                                        </motion.span>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
+            {/* Clear Quests Button */}
             {totalQuests > 0 && (
-                <button onClick={resetQuests} className="text-[10px] font-bold opacity-30 hover:opacity-100 uppercase tracking-widest mt-2 transition-opacity self-center">
-                    Reset Quest Board
+                <button
+                    onClick={resetQuests}
+                    className="mt-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-30 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-red-500 mx-auto"
+                >
+                    <Trash2 size={12} /> Clear All Quests
                 </button>
             )}
         </div>

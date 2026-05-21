@@ -4,38 +4,32 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { SoundOption } from "./types";
 import { useLanguage } from "@/components/shared/LanguageContext";
 import { ChevronsUpIcon } from "lucide-react";
-
-// ─── SettingsPanel ────────────────────────────────────────────────────────────
+import { usePomodoroStore } from "../_store/usePomodoroStore";
+import { PHASES } from "./types";
 
 interface SettingsPanelProps {
-    show: boolean;
-    isDark: boolean;
     cardBg: string;
-    customFocus: number;
-    sessionsUntilLong: number;
-    longBreakDuration: number;
-    sound: SoundOption;
-    accentColor: string;
-    shortBreakDuration: number;
-    onShortBreakDurationChange: (val: number) => void;
-    onFocusChange: (val: number) => void;
-    onSessionsUntilLongChange: (val: number) => void;
-    onLongBreakDurationChange: (val: number) => void;
-    onSoundChange: (val: SoundOption) => void;
-    onToggleSettings: () => void;
 }
 
-export default function SettingsPanel({
-    show, isDark, cardBg, customFocus, sessionsUntilLong, longBreakDuration, sound, accentColor, shortBreakDuration, onShortBreakDurationChange,
-    onFocusChange, onSessionsUntilLongChange, onLongBreakDurationChange, onSoundChange, onToggleSettings
-}: SettingsPanelProps) {
+export default function SettingsPanel({ cardBg }: SettingsPanelProps) {
     const { t, language, setLanguage } = useLanguage();
+    
+    const { 
+        showSettings, setShowSettings, isDark, phase,
+        customFocus, setCustomFocus,
+        shortBreakDuration, setShortBreakDuration,
+        longBreakDuration, setLongBreakDuration,
+        sessionsUntilLong, setSessionsUntilLong,
+        sound, setSound
+    } = usePomodoroStore();
+    
+    const accentColor = PHASES[phase].color;
 
     const controlBtn = `w-8 h-8 rounded-full border ${cardBg} text-base font-bold cursor-pointer flex items-center justify-center hover:opacity-80 transition active:scale-90`;
 
     return (
         <AnimatePresence>
-            {show && (
+            {showSettings && (
                 <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -56,35 +50,35 @@ export default function SettingsPanel({
                                     <p className="text-xs opacity-40">{t('focusDurationDesc')}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => onFocusChange(Math.max(5, customFocus - 5))} className={controlBtn}>−</button>
-                                    <span className="text-base font-bold w-8 text-center geo-nums">{customFocus}</span>
-                                    <button onClick={() => onFocusChange(Math.min(90, customFocus + 5))} className={controlBtn}>+</button>
+                                    <button onClick={() => setCustomFocus(Math.max(5, customFocus - 5))} className={controlBtn}>−</button>
+                                    <span className="text-base font-bold w-12 text-center geo-nums">{customFocus} <span className="text-[10px] opacity-50 font-normal">min</span></span>
+                                    <button onClick={() => setCustomFocus(Math.min(90, customFocus + 5))} className={controlBtn}>+</button>
                                 </div>
                             </div>
 
-                            {/* Short Break Duration (BARU) */}
+                            {/* Short Break Duration */}
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="text-sm font-semibold">{t('shortBreakDuration') || 'Short Break'}</p>
-                                    <p className="text-xs opacity-40">Duration in minutes</p>
+                                    <p className="text-xs opacity-40">{t('shortBreakDurationDesc')}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => onShortBreakDurationChange(Math.max(1, shortBreakDuration - 1))} className={controlBtn}>−</button>
-                                    <span className="text-base font-bold w-8 text-center geo-nums">{shortBreakDuration}</span>
-                                    <button onClick={() => onShortBreakDurationChange(Math.min(30, shortBreakDuration + 5))} className={controlBtn}>+</button>
+                                    <button onClick={() => setShortBreakDuration(Math.max(1, shortBreakDuration - 1))} className={controlBtn}>−</button>
+                                    <span className="text-base font-bold w-12 text-center geo-nums">{shortBreakDuration} <span className="text-[10px] opacity-50 font-normal">min</span></span>
+                                    <button onClick={() => setShortBreakDuration(Math.min(30, shortBreakDuration + 5))} className={controlBtn}>+</button>
                                 </div>
                             </div>
 
-                            {/* Long Break Duration (BARU) */}
+                            {/* Long Break Duration */}
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="text-sm font-semibold">{t('longBreakDuration') || 'Long Break Duration'}</p>
                                     <p className="text-xs opacity-40">{t('longBreakDurationDesc') || 'Duration for long break'}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => onLongBreakDurationChange(Math.max(5, longBreakDuration - 5))} className={controlBtn}>−</button>
-                                    <span className="text-base font-bold w-8 text-center geo-nums">{longBreakDuration}</span>
-                                    <button onClick={() => onLongBreakDurationChange(Math.min(60, longBreakDuration + 5))} className={controlBtn}>+</button>
+                                    <button onClick={() => setLongBreakDuration(Math.max(5, longBreakDuration - 5))} className={controlBtn}>−</button>
+                                    <span className="text-base font-bold w-12 text-center geo-nums">{longBreakDuration} <span className="text-[10px] opacity-50 font-normal">min</span></span>
+                                    <button onClick={() => setLongBreakDuration(Math.min(60, longBreakDuration + 5))} className={controlBtn}>+</button>
                                 </div>
                             </div>
 
@@ -95,9 +89,9 @@ export default function SettingsPanel({
                                     <p className="text-xs opacity-40">{t('sessionsUntilLongDesc')}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => onSessionsUntilLongChange(Math.max(2, sessionsUntilLong - 1))} className={controlBtn}>−</button>
-                                    <span className="text-base font-bold w-8 text-center geo-nums">{sessionsUntilLong}</span>
-                                    <button onClick={() => onSessionsUntilLongChange(Math.min(10, sessionsUntilLong + 1))} className={controlBtn}>+</button>
+                                    <button onClick={() => setSessionsUntilLong(Math.max(2, sessionsUntilLong - 1))} className={controlBtn}>−</button>
+                                    <span className="text-base font-bold w-12 text-center geo-nums">{sessionsUntilLong} <span className="text-[10px] opacity-50 font-normal">ses</span></span>
+                                    <button onClick={() => setSessionsUntilLong(Math.min(10, sessionsUntilLong + 1))} className={controlBtn}>+</button>
                                 </div>
                             </div>
 
@@ -109,7 +103,7 @@ export default function SettingsPanel({
                                 </div>
                                 <div className={`flex rounded-full p-1 gap-1 border ${cardBg} text-[9px] uppercase tracking-widest font-bold`}>
                                     {(["off", "white", "brown"] as const).map(opt => (
-                                        <button key={opt} onClick={() => onSoundChange(opt)}
+                                        <button key={opt} onClick={() => setSound(opt)}
                                             className={`px-3 py-1.5 rounded-full cursor-pointer transition ${sound === opt ? "text-white shadow-md" : "opacity-40 hover:opacity-70"}`}
                                             style={sound === opt ? { backgroundColor: accentColor } : {}}>
                                             {opt === "off" ? t('soundOff') : opt === "white" ? t('soundWhite') : t('soundBrown')}
@@ -139,7 +133,7 @@ export default function SettingsPanel({
                     </div>
 
                     <div className="w-full mt-4 mb-2 border-t pt-2" style={{ borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)" }}>
-                        <button type="button" className="flex items-center justify-center font-semibold py-1.5 cursor-pointer w-full" onClick={onToggleSettings}><span><ChevronsUpIcon className="w-5 h-5 mr-2" /></span>{t('closeSettings')}</button>
+                        <button type="button" className="flex items-center justify-center font-semibold py-1.5 cursor-pointer w-full" onClick={() => setShowSettings(false)}><span><ChevronsUpIcon className="w-5 h-5 mr-2" /></span>{t('closeSettings')}</button>
                     </div>
                 </motion.div>
             )}

@@ -1,56 +1,56 @@
-# Dokumentasi Fitur Pomodoro Mawaqit
+# Pomodoro Mawaqit
 
-Dokumen ini berisi analisis dan dokumentasi lengkap mengenai fitur-fitur yang terdapat pada halaman Pomodoro di aplikasi Mawaqit. Halaman ini dirancang untuk membantu produktivitas pengguna dengan antarmuka yang modern, responsif, dan interaktif.
+Modul produktivitas berbasis teknik Pomodoro dengan integrasi pemutar musik Lofi dan manajemen tugas (To-Do List).
 
-## 1. Arsitektur Utama & Manajemen State (`page.tsx`)
-Halaman utama Pomodoro bertindak sebagai orkestrator (pengatur utama) dari seluruh komponen Pomodoro.
-*   **Sistem Timer Berbasis Web Worker:** Timer menggunakan Web Worker (`timer.worker.js`) untuk memastikan hitungan mundur tetap berjalan akurat bahkan saat tab peramban (browser) tidak aktif atau berada di latar belakang.
-*   **Fase Pomodoro:** Memiliki 3 fase utama:
-    *   **Focus:** Waktu fokus untuk bekerja (default/kustomisasi).
-    *   **Short Break:** Waktu istirahat singkat (default 5 menit).
-    *   **Long Break:** Waktu istirahat panjang (default 15 menit), dipicu setelah sejumlah sesi fokus selesai (biasanya 4 sesi).
-*   **Audio & Notifikasi:**
-    *   **Bel (Bell):** Bunyi penanda saat satu fase telah selesai.
-    *   **Noise Generator:** Fitur suara latar (White Noise / Brown Noise) yang dihasilkan melalui `AudioContext` untuk membantu fokus.
-*   **Mode Layar Penuh (Fullscreen):** Terdapat tombol untuk mengubah tampilan menjadi layar penuh tanpa gangguan.
-*   **Dukungan Tema:** Terintegrasi dengan sistem tema aplikasi (Gelap/Terang) yang memperbarui warna elemen dan latar belakang secara dinamis.
+## Mulai Cepat (Quick Start)
 
-## 2. Bagian Timer (`TimerSection.tsx`)
-Komponen ini menangani visualisasi dan kontrol timer.
-*   **Visualisasi Progres (Progress Ring):** Menampilkan sisa waktu dalam bentuk lingkaran progres (Progress Ring) menggunakan animasi dari `framer-motion`.
-*   **Panduan Pernapasan (Breathing Guide):** Saat berada di fase istirahat (Short Break / Long Break), progres lingkaran digantikan dengan panduan pernapasan visual untuk membantu pengguna relaksasi.
-*   **Kontrol Timer:** Tombol untuk *Play/Pause*, *Skip* (langsung ke fase berikutnya), dan *Reset* (mengulang waktu saat ini).
-*   **Peralihan Fase Manual:** Pengguna dapat berpindah antar fase (Focus, Short Break, Long Break) melalui tombol *pill* di atas timer.
-*   **Statistik Sesi (Session Stats):** Menampilkan data sesi saat ini:
-    *   Jumlah sesi fokus yang telah diselesaikan.
-    *   Total menit fokus.
-    *   Jumlah istirahat panjang (*Long Breaks*) yang telah diambil.
-*   **Titik Sesi (Session Dots):** Indikator visual berupa titik-titik yang menunjukkan progres menuju istirahat panjang.
+Modul Pomodoro dapat diakses langsung melalui rute `/pomodoro` di aplikasi Mawaqit. 
+Tidak diperlukan instalasi khusus karena fitur ini di-render sebagai halaman aplikasi Next.js standar. Akses melalui navigasi utama atau langsung ke URL `/pomodoro`.
 
-## 3. Manajemen Tugas (`TaskList.tsx`)
-Panel untuk mengelola daftar pekerjaan (To-Do List) selama menggunakan Pomodoro.
-*   **CRUD Sederhana:** Pengguna dapat menambahkan tugas baru, menandai tugas selesai (*checklist*), dan menghapus tugas secara individu.
-*   **Penyimpanan Lokal (Local Storage):** Semua tugas disimpan di `localStorage` peramban (dengan *key* `pomodoro-tasks`), sehingga data tidak hilang ketika halaman dimuat ulang (refresh).
-*   **Aksi Massal:** 
-    *   **Clear Done:** Menghapus semua tugas yang sudah ditandai selesai.
-    *   **Clear All:** Menghapus seluruh daftar tugas.
-*   **Animasi Halus:** Menggunakan `framer-motion` (`AnimatePresence` dan `layout`) untuk animasi *layout shift* ketika tugas ditambah, dicentang, atau dihapus.
+## Fitur (Features)
 
-## 4. Pemutar Lofi YouTube (`LofiPlayer.tsx`)
-Fitur pemutar musik latar berbasis YouTube IFrame API tanpa menampilkan video YouTube secara langsung.
-*   **Pemutar Tersembunyi:** Video YouTube di-*embed* dan disembunyikan menggunakan CSS, sehingga hanya memutar audionya saja.
-*   **Visualizer Gelombang (Waveform):** Menampilkan animasi gelombang suara buatan saat stasiun musik diputar.
-*   **Kontrol Volume:** Pengguna dapat mengatur volume suara menggunakan *slider* khusus.
-*   **Manajemen Stasiun Musik:**
-    *   Dilengkapi stasiun default ("Lofi Hip Hop").
-    *   Pengguna dapat menambahkan stasiun YouTube khusus (*Custom Station*) dengan menempelkan URL YouTube. Aplikasi akan mengekstrak ID video secara otomatis.
-    *   Stasiun khusus disimpan ke `localStorage` (`pomodoro-lofi-stations`) dan dapat dihapus.
-*   **Panel yang Dapat Dilipat (Collapsible):** Antarmuka pemutar dirancang ringkas; pengguna bisa mengklik area utama untuk memperluas panel volume dan daftar stasiun.
+- **Sistem Timer Andal:** Timer menggunakan Web Worker (`timer.worker.js`) agar hitungan mundur tidak terhenti oleh mekanisme jeda (*throttling*) peramban saat tab berada di latar belakang.
+- **Fase Fleksibel:** Mendukung 3 fase utama:
+  - **Focus:** Waktu kerja/belajar produktif.
+  - **Short Break:** Istirahat ringan dengan visualisasi panduan pernapasan (*Breathing Guide*).
+  - **Long Break:** Istirahat panjang yang aktif secara otomatis setelah target sesi fokus tertentu terpenuhi.
+- **Pemutar Musik Lofi (Lofi Player):**
+  - Menggunakan YouTube IFrame API tanpa memuat bingkai visual (hanya audio).
+  - Dilengkapi *waveform visualizer* responsif.
+  - Dukungan untuk menambah, menyimpan, dan menghapus *Custom Station* langsung dari tautan YouTube.
+- **Generator Suara (Noise Generator):** Memanfaatkan `AudioContext` murni untuk mensintesis suara *White Noise* dan *Brown Noise* tanpa perlu aset berkas audio eksternal.
+- **Manajemen Tugas (Task List):**
+  - Menyimpan tugas pengguna menggunakan *Local Storage* peramban.
+  - Mendukung penambahan, penandaan (check), dan penghapusan massal.
+  - Animasi transisi mulus menggunakan `framer-motion`.
+- **Responsivitas & Tema:**
+  - Desain antarmuka otomatis menyesuaikan (Terang/Gelap).
+  - Terintegrasi penuh dengan lokalisasi (i18n) `LanguageContext`.
+  - Mode Layar Penuh (Fullscreen) untuk fokus optimal.
 
-## 5. Fitur Pengaturan Tambahan (`SettingsPanel.tsx`)
-Walaupun tidak dirender penuh dalam analisis *file* inti, kontrol pengaturan disalurkan dari `page.tsx`:
-*   **Durasi Kustom:** Pengguna dapat mengubah durasi waktu "Focus" (misalnya dari 25 menit menjadi 50 menit).
-*   **Pilihan Suara:** Pengguna dapat memilih jenis suara latar (Off, White Noise, atau Brown Noise).
+## Konfigurasi (Configuration)
 
-## 6. Lokalisasi / Multi-Bahasa
-Semua komponen menggunakan `useLanguage()` dari `LanguageContext` untuk mendukung perubahan teks bahasa (Inggris, Arab, dsb) secara dinamis tanpa me-*refresh* halaman (misalnya `t('focus')`, `t('tasks')`).
+Pengaturan pada panel Pomodoro (Settings) beserta nilai bawaannya:
+
+| Pengaturan | Deskripsi | Default |
+|----------|-------------|---------|
+| Focus Duration | Durasi waktu untuk satu sesi fokus | 25 Menit |
+| Short Break | Durasi sesi istirahat singkat | 5 Menit |
+| Long Break | Durasi sesi istirahat panjang | 15 Menit |
+| Sessions until Long Break | Target sesi fokus untuk mendapatkan istirahat panjang | 4 Sesi |
+| Sound | Suara pendukung fokus (Off / White / Brown) | Off |
+| Lofi Stations | *(Local Storage)* Daftar stasiun Lofi kustom | [Bawaan] |
+| Tasks | *(Local Storage)* Daftar tugas sesi | Kosong |
+
+## Dokumentasi Teknis
+
+- **Orkestrasi Utama (`page.tsx`):** Menangani perubahan antar fase, sinkronisasi *Web Worker*, memutar bel notifikasi, dan pengelolaan state durasi sesi.
+- **Seksi Timer (`TimerSection.tsx`):** Tempat komponen visual (SVG Progress Ring), dan kontrol interaktif (Play, Pause, Reset, Skip).
+- **Panel Tambahan (`TaskPanel.tsx`, `TaskList.tsx`, `LofiPlayer.tsx`):** Mengatur fungsionalitas sisi pengguna secara asinkron di dalam *layout* dua kolom saat layar lebar.
+
+### Konsep Utama untuk AI (llms.txt ready)
+
+- Timer berjalan di **Web Worker** (`public/timer.worker.js`) agar tidak tertunda oleh fitur hemat baterai/memori browser.
+- **Sintesis Audio** via `AudioContext` untuk meminimalkan ukuran *bundle* dan meningkatkan efisiensi.
+- Pemutar Lofi menggunakan metode **headless YouTube iframe** untuk hanya mengambil stream audio.
+- Modifikasi status komponen menggunakan **Framer Motion** dan *React state* secara lokal, dipadukan sinkronisasi ke `localStorage`.

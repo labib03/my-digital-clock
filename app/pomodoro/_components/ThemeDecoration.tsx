@@ -1,6 +1,10 @@
 "use client";
 
-export default function ThemeDecoration({ isDark }: { isDark: boolean }) {
+import { usePomodoroStore } from "../_store/usePomodoroStore";
+
+export default function ThemeDecoration() {
+    const isDark = usePomodoroStore(state => state.isDark);
+
     return (
         <div className="fixed inset-0 pointer-events-none z-0">
             <div className={`absolute inset-0 transition-colors duration-700 ${isDark ? 'bg-[#15151A]' : 'bg-[#F1F5F9]'}`} />
