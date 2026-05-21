@@ -62,11 +62,12 @@ function Waveform({ color }: { color: string }) {
 interface LofiPlayerProps {
     isDark: boolean;
     accentColor: string;
+    onExpandedChange?: (expanded: boolean) => void;
 }
 
 const STORAGE_KEY = "pomodoro-lofi-stations";
 
-export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
+export default function LofiPlayer({ isDark, accentColor, onExpandedChange }: LofiPlayerProps) {
     const { t } = useLanguage();
     const playerRef = useRef<YTPlayer | null>(null);
     const [ready, setReady] = useState(false);
@@ -188,7 +189,11 @@ export default function LofiPlayer({ isDark, accentColor }: LofiPlayerProps) {
             <div id="yt-lofi-hidden" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none", top: -9999 }} />
 
             <div className={`w-full rounded-3xl ${gamePanel} overflow-hidden transition-colors duration-300`}>
-                <div onClick={() => setExpanded(!expanded)}
+                <div onClick={() => {
+                    const next = !expanded;
+                    setExpanded(next);
+                    if (onExpandedChange) onExpandedChange(next);
+                }}
                     className="w-full flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors select-none">
 
                     <div className="flex items-center gap-4">
