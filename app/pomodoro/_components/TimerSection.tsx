@@ -74,7 +74,7 @@ export default function TimerSection({
     return (
         <>
             <section className="relative lg:flex-1 flex flex-col items-center py-4 lg:py-6 lg:overflow-hidden shrink-0 scroll-smooth z-10 w-full">
-                <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-5 w-full max-w-lg lg:max-w-3xl mx-auto px-4">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-5 lg:gap-8 w-full max-w-lg lg:max-w-4xl xl:max-w-[1400px] mx-auto px-4 lg:px-8 xl:px-12">
                     
                     {/* 1. DYNAMIC TABS BLOCK */}
                     <div className={`relative flex p-1.5 sm:p-2 rounded-2xl w-fit mx-auto ${gamePanel}`}>
@@ -105,10 +105,10 @@ export default function TimerSection({
                     </div>
 
                     {/* 2. BENTO GRID */}
-                    <div ref={timerRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 w-full mt-2">
+                    <div ref={timerRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-8 w-full mt-2 lg:mt-4">
                         
                         {/* LEFT: VISUAL ARENA */}
-                        <div className={`flex flex-col items-center justify-center p-6 sm:p-8 rounded-[2rem] ${gamePanel} h-full min-h-[320px]`}>
+                        <div className={`flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 rounded-[2rem] lg:rounded-[3rem] ${gamePanel} h-full min-h-[320px] lg:min-h-[440px]`}>
                             <AnimatePresence mode="wait">
                                 {(phase === "short" || phase === "long") && running ? (
                                     <motion.div key="breathing"
@@ -118,7 +118,7 @@ export default function TimerSection({
                                         <BreathingGuide color={current.color} />
                                         <div className="flex flex-col items-center">
                                             <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter opacity-50"
-                                                style={{ fontSize: "clamp(2rem, 5vmin, 3rem)", color: textCol }}>
+                                                style={{ fontSize: "clamp(2.5rem, 6vmin, 4rem)", color: textCol }}>
                                                 {fmt(timeLeft)}
                                             </div>
                                             <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] opacity-40 mt-1">
@@ -131,12 +131,12 @@ export default function TimerSection({
                                         initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
                                         className="relative flex flex-col items-center justify-center w-full h-full"
                                     >
-                                        <div style={{ width: "clamp(180px, 30vmin, 240px)", height: "clamp(180px, 30vmin, 240px)" }} className="relative flex items-center justify-center">
-                                            <div className="absolute inset-0 rounded-full border-[clamp(6px,2vmin,12px)] border-black/5 dark:border-white/5" />
+                                        <div style={{ width: "clamp(180px, 35vmin, 360px)", height: "clamp(180px, 35vmin, 360px)" }} className="relative flex items-center justify-center">
+                                            <div className="absolute inset-0 rounded-full border-[clamp(6px,2.5vmin,16px)] border-black/5 dark:border-white/5" />
                                             <ProgressRing pct={pct} color={current.color} />
                                             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none drop-shadow-sm">
                                                 <div className="font-extrabold geo-nums tabular-nums leading-none tracking-tighter"
-                                                    style={{ fontSize: "clamp(3.5rem, 8vmin, 5rem)", color: textCol, textShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                                                    style={{ fontSize: "clamp(3.5rem, 8vmin, 6.5rem)", color: textCol, textShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
                                                     {fmt(timeLeft)}
                                                 </div>
                                                 <motion.span key={phase} className="font-bold uppercase tracking-widest opacity-40 text-[10px] sm:text-xs mt-2">
@@ -169,7 +169,7 @@ export default function TimerSection({
                         <div className="flex flex-col gap-4 sm:gap-5 h-full">
                             
                             {/* ACTIVE TASK CARD */}
-                            <div className={`flex flex-col justify-center p-5 sm:p-6 rounded-[2rem] ${gamePanel}`}>
+                            <div className={`flex flex-col justify-center p-5 sm:p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] ${gamePanel}`}>
                                 <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-3 flex items-center gap-2">
                                     Current Quest
                                 </p>
@@ -188,7 +188,7 @@ export default function TimerSection({
                             </div>
 
                             {/* CONTROLS CARD */}
-                            <div className={`flex items-center justify-center gap-4 sm:gap-6 p-5 sm:p-6 rounded-[2rem] ${gamePanel} flex-1`}>
+                            <div className={`flex items-center justify-center gap-4 sm:gap-6 lg:gap-10 p-5 sm:p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] ${gamePanel} flex-1`}>
                                 <button
                                     onClick={onReset}
                                     className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform active:scale-90 ${gameButton}`}
@@ -219,7 +219,7 @@ export default function TimerSection({
                             </div>
 
                             {/* STATS CARD */}
-                            <div className={`flex items-center justify-around px-4 py-5 sm:p-6 rounded-[2rem] ${gamePanel}`}>
+                            <div className={`flex items-center justify-around px-4 py-5 sm:p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] ${gamePanel}`}>
                                 <div className="flex flex-col items-center">
                                     <Star size={20} className="text-yellow-400 mb-2 drop-shadow-sm" fill="currentColor" />
                                     <span className="font-extrabold text-xl leading-none geo-nums">{sessionsDone}</span>
