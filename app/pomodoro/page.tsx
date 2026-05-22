@@ -54,11 +54,10 @@ export default function PomodoroPage() {
 
     useEffect(() => {
         if (timeLeft === 0 && running) {
-            stopWorker();
             ringBell();
             advancePhase();
         }
-    }, [timeLeft, running, stopWorker, advancePhase]);
+    }, [timeLeft, running, advancePhase]);
 
     // ── Audio ──────────────────────────────────────────────────────────────
     const getAudioCtx = () => {

@@ -136,7 +136,7 @@ export const usePomodoroStore = create<PomodoroState>()(
                         sessionsDone: nextSessionsDone,
                         phase: isLongBreak ? "long" : "short",
                         timeLeft: isLongBreak ? state.longBreakDuration * 60 : state.shortBreakDuration * 60,
-                        running: false,
+                        running: state.running,
                         tasks: updatedTasks
                     };
                 } else {
@@ -144,7 +144,7 @@ export const usePomodoroStore = create<PomodoroState>()(
                     return {
                         phase: "focus",
                         timeLeft: state.customFocus * 60,
-                        running: false
+                        running: state.running
                     };
                 }
             }),
